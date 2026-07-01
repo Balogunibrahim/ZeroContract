@@ -419,7 +419,7 @@ function ShiftTracker({ session, onShowPrivacy, offline }) {
                 <input type="checkbox" checked={form.paid} onChange={(e) => setForm({ ...form, paid: e.target.checked })} /> Already paid
               </label>
               <span style={{ fontFamily: FONT_MONO, fontSize: 13, color: COLORS.inkSoft }}>
-                {calcHours(form.start, form.end)}h &middot; est. {formatMoney(calcHours(form.start, form.end) * (parseFloat(form.rate) || 0))}
+                {calcHours(form.start, form.end)}h - est. {formatMoney(calcHours(form.start, form.end) * (parseFloat(form.rate) || 0))}
               </span>
             </div>
             {saveError && <p style={{ color: COLORS.clay, fontSize: 13, marginBottom: 12 }}>{saveError}</p>}
@@ -486,8 +486,8 @@ function LedgerRow({ s, onEdit, onDelete, onTogglePaid }) {
           <p style={{ margin: 0, fontFamily: FONT_MONO, fontWeight: 600, fontSize: 15, color: COLORS.ink, whiteSpace: "nowrap" }}>{formatMoney(s.earnings)}</p>
         </div>
         <p style={{ margin: "2px 0 0", fontSize: 12.5, color: COLORS.inkSoft, fontFamily: FONT_MONO }}>
-          {s.start}&ndash;{s.end} &middot; {s.hours}h &middot; {formatMoney(s.rate)}/h
-          {s.payday ? ` &middot; pays ${formatDate(s.payday, { month: "short", day: "numeric" })}` : ""}
+          {s.start}-{s.end} - {s.hours}h - {formatMoney(s.rate)}/h
+          {s.payday ? ` - pays ${formatDate(s.payday, { month: "short", day: "numeric" })}` : ""}
         </p>
         {s.notes && <p style={{ margin: "3px 0 0", fontSize: 12, color: COLORS.inkSoft, fontStyle: "italic" }}>{s.notes}</p>}
       </div>
