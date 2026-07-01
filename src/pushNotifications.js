@@ -57,14 +57,17 @@ export async function enablePushNotifications(userId) {
 
   const deviceHint = isIOS() ? "iOS" : /Android/i.test(navigator.userAgent) ? "Android" : "Desktop";
 
-  const { error } = await supabase.from("push_subscriptions").upsert(
-    {
-      user_id: userId,
-      subscription: subscription.toJSON(),
-      device_hint: deviceHint,
-    },
-    { onConflict: "user_id,subscription" }
-  );
+  // Clear out any old subscription rows for this user first, then insert a
+  // fresh one. This avoids relying on a fragile upsert-match on the
+  // subscription JSON, which can fail to match after a device
+  // unsubscribes and resubscribes with a new endpoint.
+  await supabase.from("push_subscriptions").delete().eq("user_id", userId);
+
+  const { error } = await supabase.from("push_subscriptions").insert({
+    user_id: userId,
+    subscription: subscription.toJSON(),
+    device_hint: deviceHint,
+  });
 
   if (error) throw error;
 
