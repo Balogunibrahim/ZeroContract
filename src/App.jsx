@@ -5,6 +5,7 @@ import AuthScreen from "./AuthScreen";
 import PrivacyPolicy from "./PrivacyPolicy";
 import ResetPassword from "./ResetPassword";
 import { estimateTax } from "./taxUtils";
+import NotificationToggle from "./NotificationToggle";
 
 const COLORS = {
   navy: "#15203B",
@@ -539,6 +540,7 @@ function SettingsPanel({ profile, onSave, onClose, onShowPrivacy, onLogout }) {
             Add other income so the tax estimate reflects your full picture. Optional.
           </p>
         </div>
+        <NotificationToggle userId={profile?.id} />
         <button onClick={handleSave} disabled={saving} style={primaryButtonStyle}>{saved ? "Saved" : saving ? "Saving..." : "Save changes"}</button>
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${COLORS.paperDim}`, display: "flex", gap: 12, flexWrap: "wrap" }}>
           <button onClick={onShowPrivacy} style={{ border: "none", background: "none", color: COLORS.inkSoft, cursor: "pointer", fontSize: 13, padding: 0, textDecoration: "underline", fontFamily: FONT_BODY }}>Privacy Policy</button>
