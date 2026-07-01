@@ -2,7 +2,7 @@ import { supabase } from "./supabaseClient";
 
 // This is the "public key" half of your app's notification signature.
 // It's safe for this to be visible in the app code.
-const VAPID_PUBLIC_KEY = "BGG724uJi35DnT8zw0poJ_1PesLLQCE7SzyQqBvDThEe4VYay9QxJ9nC3BWvOU-tXKqRm7qsIN7kzGUaQnS-DRE";
+const VAPID_PUBLIC_KEY = "BJNj099MTrEJ8uwgo5wACot2XKiaQPjda8EPfLDouL216qBgCxTYNvujTB8EAUDPy-75ySZExlSzefwX_lOMCI0";
 
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
