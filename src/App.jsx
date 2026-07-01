@@ -351,6 +351,9 @@ function ShiftTracker({ session, onShowPrivacy, offline }) {
               <p style={{ color: COLORS.amber, fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 2, margin: 0 }}>ZERO CONTRACT</p>
               {firstName && <p style={{ color: COLORS.offwhite, opacity: 0.55, fontFamily: FONT_BODY, fontSize: 13, margin: "2px 0 0" }}>{firstName}'s ledger</p>}
             </div>
+            <button onClick={() => supabase.auth.signOut()} style={{ border: "none", background: "rgba(255,255,255,0.08)", borderRadius: 5, padding: 8, cursor: "pointer", display: "flex", marginRight: 8 }} aria-label="Log out">
+              <LogOut size={16} color={COLORS.offwhite} style={{ opacity: 0.7 }} />
+            </button>
             <button onClick={() => setShowSettings(true)} style={{ border: "none", background: "rgba(255,255,255,0.08)", borderRadius: 5, padding: 8, cursor: "pointer", display: "flex" }} aria-label="Settings">
               <Settings size={16} color={COLORS.offwhite} style={{ opacity: 0.7 }} />
             </button>
@@ -419,7 +422,7 @@ function ShiftTracker({ session, onShowPrivacy, offline }) {
                 <input type="checkbox" checked={form.paid} onChange={(e) => setForm({ ...form, paid: e.target.checked })} /> Already paid
               </label>
               <span style={{ fontFamily: FONT_MONO, fontSize: 13, color: COLORS.inkSoft }}>
-                {calcHours(form.start, form.end)}h - est. {formatMoney(calcHours(form.start, form.end) * (parseFloat(form.rate) || 0))}
+                {calcHours(form.start, form.end)}h &middot; est. {formatMoney(calcHours(form.start, form.end) * (parseFloat(form.rate) || 0))}
               </span>
             </div>
             {saveError && <p style={{ color: COLORS.clay, fontSize: 13, marginBottom: 12 }}>{saveError}</p>}
@@ -486,8 +489,8 @@ function LedgerRow({ s, onEdit, onDelete, onTogglePaid }) {
           <p style={{ margin: 0, fontFamily: FONT_MONO, fontWeight: 600, fontSize: 15, color: COLORS.ink, whiteSpace: "nowrap" }}>{formatMoney(s.earnings)}</p>
         </div>
         <p style={{ margin: "2px 0 0", fontSize: 12.5, color: COLORS.inkSoft, fontFamily: FONT_MONO }}>
-          {s.start}-{s.end} - {s.hours}h - {formatMoney(s.rate)}/h
-          {s.payday ? ` - pays ${formatDate(s.payday, { month: "short", day: "numeric" })}` : ""}
+          {s.start}&ndash;{s.end} &middot; {s.hours}h &middot; {formatMoney(s.rate)}/h
+          {s.payday ? ` &middot; pays ${formatDate(s.payday, { month: "short", day: "numeric" })}` : ""}
         </p>
         {s.notes && <p style={{ margin: "3px 0 0", fontSize: 12, color: COLORS.inkSoft, fontStyle: "italic" }}>{s.notes}</p>}
       </div>
