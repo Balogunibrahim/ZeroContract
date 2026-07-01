@@ -200,7 +200,17 @@ function SignupForm({ onSwitch, onShowPrivacy }) {
     }
     setBusy(true);
     const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
-    if (signUpError) { setError(signUpError.message); setBusy(false); return; }
+ if (signUpError) {
+  if (signUpError.message.toLowerCase().includes("already registered") ||
+      signUpError.message.toLowerCase().includes("already exists") ||
+      signUpError.message.toLowerCase().includes("email") ) {
+    setError("An account with that email already exists. Try logging in instead.");
+  } else {
+    setError(signUpError.message);
+  }
+  setBusy(false);
+  return;
+}
     if (data.session && data.user) {
       await supabase.from("profiles").insert({
         id: data.user.id,
