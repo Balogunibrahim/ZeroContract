@@ -311,7 +311,7 @@ function ShiftTracker({ session, onShowPrivacy, offline }) {
   return (
     <div style={{ minHeight: "100vh", background: COLORS.paper, fontFamily: FONT_BODY }}>
       {showSettings && (
-        <SettingsPanel profile={profile} onSave={saveProfile} onClose={() => setShowSettings(false)} onShowPrivacy={onShowPrivacy} onLogout={() => supabase.auth.signOut()} />
+        <SettingsPanel profile={profile} session={session} onSave={saveProfile} onClose={() => setShowSettings(false)} onShowPrivacy={onShowPrivacy} onLogout={() => supabase.auth.signOut()} />
       )}
 
       {/* Onboarding overlay for new users */}
@@ -501,7 +501,7 @@ function LedgerRow({ s, onEdit, onDelete, onTogglePaid }) {
   );
 }
 
-function SettingsPanel({ profile, onSave, onClose, onShowPrivacy, onLogout }) {
+function SettingsPanel({ profile, session, onSave, onClose, onShowPrivacy, onLogout }) {
   const [taxRegion, setTaxRegion] = useState(profile?.tax_region || "rest_of_uk");
   const [otherIncome, setOtherIncome] = useState(String(profile?.other_income || "0"));
   const [firstName, setFirstName] = useState(profile?.first_name || "");
@@ -543,7 +543,7 @@ function SettingsPanel({ profile, onSave, onClose, onShowPrivacy, onLogout }) {
             Add other income so the tax estimate reflects your full picture. Optional.
           </p>
         </div>
-        <NotificationToggle userId={profile?.id} />
+        <NotificationToggle userId={session.user.id} />
         <button onClick={handleSave} disabled={saving} style={primaryButtonStyle}>{saved ? "Saved" : saving ? "Saving..." : "Save changes"}</button>
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${COLORS.paperDim}`, display: "flex", gap: 12, flexWrap: "wrap" }}>
           <button onClick={onShowPrivacy} style={{ border: "none", background: "none", color: COLORS.inkSoft, cursor: "pointer", fontSize: 13, padding: 0, textDecoration: "underline", fontFamily: FONT_BODY }}>Privacy Policy</button>
