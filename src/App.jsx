@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Trash2, Calendar, Clock, LogOut, X, Settings } from "lucide-react";
+import { Plus, Trash2, Calendar, Clock, LogOut, X, Settings, WifiOff, AlertCircle } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import AuthScreen from "./AuthScreen";
 import PrivacyPolicy from "./PrivacyPolicy";
@@ -24,46 +24,24 @@ const FONT_BODY = "'Inter', -apple-system, sans-serif";
 const FONT_MONO = "'JetBrains Mono', 'Courier New', monospace";
 
 const fieldLabelStyle = {
-  fontSize: 11,
-  letterSpacing: 1,
-  textTransform: "uppercase",
-  color: COLORS.inkSoft,
-  fontFamily: FONT_MONO,
-  display: "block",
-  marginBottom: 6,
+  fontSize: 11, letterSpacing: 1, textTransform: "uppercase",
+  color: COLORS.inkSoft, fontFamily: FONT_MONO, display: "block", marginBottom: 6,
 };
 
 const inputStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  boxSizing: "border-box",
-  border: `1px solid ${COLORS.paperDim}`,
-  borderBottom: `2px solid ${COLORS.ink}`,
-  borderRadius: 3,
-  background: "white",
-  fontFamily: FONT_BODY,
-  fontSize: 15,
-  color: COLORS.ink,
-  outline: "none",
+  width: "100%", padding: "10px 12px", boxSizing: "border-box",
+  border: `1px solid ${COLORS.paperDim}`, borderBottom: `2px solid ${COLORS.ink}`,
+  borderRadius: 3, background: "white", fontFamily: FONT_BODY,
+  fontSize: 15, color: COLORS.ink, outline: "none",
 };
 
 const primaryButtonStyle = {
-  width: "100%",
-  padding: "12px 16px",
-  borderRadius: 4,
-  border: "none",
-  background: COLORS.ink,
-  color: COLORS.offwhite,
-  cursor: "pointer",
-  fontSize: 14,
-  fontWeight: 600,
-  letterSpacing: 0.5,
-  fontFamily: FONT_BODY,
+  width: "100%", padding: "12px 16px", borderRadius: 4, border: "none",
+  background: COLORS.ink, color: COLORS.offwhite, cursor: "pointer",
+  fontSize: 14, fontWeight: 600, letterSpacing: 0.5, fontFamily: FONT_BODY,
 };
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+function todayISO() { return new Date().toISOString().slice(0, 10); }
 
 function formatDate(iso, opts) {
   if (!iso) return "";
@@ -93,26 +71,38 @@ function ensureFonts() {
   document.head.appendChild(link);
 }
 
+function Spinner() {
+  return (
+    <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+      <p style={{ color: COLORS.offwhite, fontFamily: FONT_MONO, fontSize: 13, letterSpacing: 1, opacity: 0.7 }}>LOADING...</p>
+    </div>
+  );
+}
+
+function NetworkBanner({ offline }) {
+  if (!offline) return null;
+  return (
+    <div style={{ background: COLORS.clay, color: "white", padding: "10px 16px", display: "flex", alignItems: "center", gap: 8, fontFamily: FONT_BODY, fontSize: 13 }}>
+      <WifiOff size={15} />
+      No internet connection. Your data will sync when you're back online.
+    </div>
+  );
+}
+
 export default function App() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [showPrivacy, setShowPrivacy] = useState(false);
-  const [isPasswordReset, setIsPasswordReset] = useState(false);
+  const [offline, setOffline] = useState(!navigator.onLine);
+  const isPasswordReset = useState(() => window.location.hash.includes("type=recovery"))[0];
 
   useEffect(() => {
     ensureFonts();
 
-    // Check URL hash for Supabase recovery token FIRST before anything else
-    const hash = window.location.hash;
-    if (hash && hash.includes("type=recovery")) {
-      setIsPasswordReset(true);
-      // Let Supabase process the token from the URL
-      supabase.auth.getSession().then(({ data }) => {
-        setSession(data.session);
-        setAuthLoading(false);
-      });
-      return;
-    }
+    const handleOnline = () => setOffline(false);
+    const handleOffline = () => setOffline(true);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -120,35 +110,26 @@ export default function App() {
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setIsPasswordReset(true);
-      }
       setSession(newSession);
+      if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" || event === "SIGNED_IN" || event === "USER_UPDATED") {
+        setAuthLoading(false);
+      }
     });
 
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      listener.subscription.unsubscribe();
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
 
-  const handlePasswordResetDone = () => {
-    setIsPasswordReset(false);
-    // Clear the hash from the URL so refreshing doesn't re-trigger reset mode
-    window.history.replaceState(null, "", window.location.pathname);
-  };
+  if (authLoading) return <Spinner />;
 
-  if (authLoading) {
-    return (
-      <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: COLORS.offwhite, fontFamily: FONT_MONO, fontSize: 13, letterSpacing: 1 }}>LOADING...</p>
-      </div>
-    );
-  }
-
-  // Password reset mode: user arrived via email link
   if (isPasswordReset && session) {
     return (
       <>
         {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
-        <ResetPassword onDone={handlePasswordResetDone} />
+        <ResetPassword onDone={() => { window.history.replaceState(null, "", window.location.pathname); }} />
       </>
     );
   }
@@ -156,24 +137,28 @@ export default function App() {
   return (
     <>
       {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
+      <NetworkBanner offline={offline} />
       {!session
         ? <AuthScreen onShowPrivacy={() => setShowPrivacy(true)} />
-        : <ShiftTracker session={session} onShowPrivacy={() => setShowPrivacy(true)} />
+        : <ShiftTracker session={session} onShowPrivacy={() => setShowPrivacy(true)} offline={offline} />
       }
     </>
   );
 }
 
-function ShiftTracker({ session, onShowPrivacy }) {
+function ShiftTracker({ session, onShowPrivacy, offline }) {
   const [shifts, setShifts] = useState([]);
   const [profile, setProfile] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formVisible, setFormVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [showTax, setShowTax] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const [form, setForm] = useState({
     date: todayISO(), start: "09:00", end: "17:00",
@@ -181,32 +166,44 @@ function ShiftTracker({ session, onShowPrivacy }) {
   });
 
   const loadAll = async () => {
-    const [{ data: shiftsData }, { data: profileData }] = await Promise.all([
-      supabase.from("shifts").select("*").order("date", { ascending: true }),
-      supabase.from("profiles").select("*").eq("id", session.user.id).single(),
-    ]);
-    if (shiftsData) {
-      setShifts(shiftsData.map((s) => ({
-        id: s.id, date: s.date,
-        start: s.start_time?.slice(0, 5),
-        end: s.end_time?.slice(0, 5),
-        hours: Number(s.hours), rate: Number(s.rate),
-        payday: s.payday, paid: s.paid, notes: s.notes || "",
-      })));
-    }
-    if (profileData) {
-      setProfile(profileData);
-    } else {
-      const pending = sessionStorage.getItem("zc_pending_profile");
-      if (pending) {
-        const parsed = JSON.parse(pending);
-        const { data: newProfile } = await supabase.from("profiles").insert({
-          id: session.user.id, ...parsed,
-          privacy_consent: true,
-          privacy_consent_at: new Date().toISOString(),
-        }).select().single();
-        if (newProfile) { setProfile(newProfile); sessionStorage.removeItem("zc_pending_profile"); }
+    setLoadError(false);
+    try {
+      const [{ data: shiftsData, error: shiftsError }, { data: profileData }] = await Promise.all([
+        supabase.from("shifts").select("*").order("date", { ascending: true }),
+        supabase.from("profiles").select("*").eq("id", session.user.id).single(),
+      ]);
+
+      if (shiftsError) throw shiftsError;
+
+      if (shiftsData) {
+        setShifts(shiftsData.map((s) => ({
+          id: s.id, date: s.date,
+          start: s.start_time?.slice(0, 5),
+          end: s.end_time?.slice(0, 5),
+          hours: Number(s.hours), rate: Number(s.rate),
+          payday: s.payday, paid: s.paid, notes: s.notes || "",
+        })));
+        // Show onboarding for brand new users with no shifts
+        if (shiftsData.length === 0 && !profileData) setShowOnboarding(true);
       }
+
+      if (profileData) {
+        setProfile(profileData);
+      } else {
+        const pending = sessionStorage.getItem("zc_pending_profile");
+        if (pending) {
+          const parsed = JSON.parse(pending);
+          const { data: newProfile } = await supabase.from("profiles").insert({
+            id: session.user.id, ...parsed,
+            privacy_consent: true,
+            privacy_consent_at: new Date().toISOString(),
+          }).select().single();
+          if (newProfile) { setProfile(newProfile); sessionStorage.removeItem("zc_pending_profile"); }
+        }
+        if (shiftsData && shiftsData.length === 0) setShowOnboarding(true);
+      }
+    } catch (err) {
+      setLoadError(true);
     }
     setLoaded(true);
   };
@@ -221,6 +218,7 @@ function ShiftTracker({ session, onShowPrivacy }) {
   const resetForm = () => {
     setForm({ date: todayISO(), start: "09:00", end: "17:00", rate: "", payday: "", paid: false, notes: "" });
     setEditingId(null);
+    setSaveError("");
   };
 
   const closeForm = () => {
@@ -229,18 +227,26 @@ function ShiftTracker({ session, onShowPrivacy }) {
   };
 
   const handleSave = async () => {
-    if (!form.date || !form.rate) return;
-    setSaving(true);
-    const hours = calcHours(form.start, form.end);
-    const row = {
-      user_id: session.user.id, date: form.date,
-      start_time: form.start, end_time: form.end, hours,
-      rate: parseFloat(form.rate) || 0,
-      payday: form.payday || null, paid: !!form.paid, notes: form.notes,
-    };
-    if (editingId) await supabase.from("shifts").update(row).eq("id", editingId);
-    else await supabase.from("shifts").insert(row);
-    await loadAll(); resetForm(); closeForm(); setSaving(false);
+    if (!form.date || !form.rate) { setSaveError("Date and hourly rate are required."); return; }
+    setSaving(true); setSaveError("");
+    try {
+      const hours = calcHours(form.start, form.end);
+      const row = {
+        user_id: session.user.id, date: form.date,
+        start_time: form.start, end_time: form.end, hours,
+        rate: parseFloat(form.rate) || 0,
+        payday: form.payday || null, paid: !!form.paid, notes: form.notes,
+      };
+      const { error } = editingId
+        ? await supabase.from("shifts").update(row).eq("id", editingId)
+        : await supabase.from("shifts").insert(row);
+      if (error) throw error;
+      await loadAll(); resetForm(); closeForm();
+      setShowOnboarding(false);
+    } catch (err) {
+      setSaveError("Couldn't save your shift. Check your connection and try again.");
+    }
+    setSaving(false);
   };
 
   const handleEdit = (s) => {
@@ -248,15 +254,30 @@ function ShiftTracker({ session, onShowPrivacy }) {
     setEditingId(s.id); setShowForm(true);
   };
 
-  const handleDelete = async (id) => { await supabase.from("shifts").delete().eq("id", id); await loadAll(); };
-  const togglePaid = async (s) => { await supabase.from("shifts").update({ paid: !s.paid }).eq("id", s.id); await loadAll(); };
+  const handleDelete = async (id) => {
+    try {
+      const { error } = await supabase.from("shifts").delete().eq("id", id);
+      if (!error) await loadAll();
+    } catch (err) {}
+  };
+
+  const togglePaid = async (s) => {
+    try {
+      await supabase.from("shifts").update({ paid: !s.paid }).eq("id", s.id);
+      await loadAll();
+    } catch (err) {}
+  };
+
   const saveProfile = async (updates) => {
     const { data } = await supabase.from("profiles").update(updates).eq("id", session.user.id).select().single();
     if (data) setProfile(data);
   };
 
   const today = todayISO();
-  const enriched = useMemo(() => shifts.map((s) => ({ ...s, earnings: Math.round(s.hours * s.rate * 100) / 100 })).sort((a, b) => a.date < b.date ? -1 : 1), [shifts]);
+  const enriched = useMemo(() =>
+    shifts.map((s) => ({ ...s, earnings: Math.round(s.hours * s.rate * 100) / 100 }))
+      .sort((a, b) => a.date < b.date ? -1 : 1),
+    [shifts]);
   const past = enriched.filter((s) => s.date < today);
   const future = enriched.filter((s) => s.date >= today);
   const totalEarned = past.reduce((sum, s) => sum + s.earnings, 0);
@@ -269,24 +290,59 @@ function ShiftTracker({ session, onShowPrivacy }) {
   const allEarnings = enriched.reduce((sum, s) => sum + s.earnings, 0);
   const taxEstimate = profile ? estimateTax(allEarnings, profile.other_income || 0, profile.tax_region || "rest_of_uk") : null;
 
-  if (!loaded) {
+  if (!loaded) return <Spinner />;
+
+  if (loadError) {
     return (
-      <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: COLORS.offwhite, fontFamily: FONT_MONO, fontSize: 13, letterSpacing: 1 }}>LOADING LEDGER...</p>
+      <div style={{ minHeight: "100vh", background: COLORS.paper, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem", fontFamily: FONT_BODY }}>
+        <div style={{ textAlign: "center", maxWidth: 320 }}>
+          <AlertCircle size={36} color={COLORS.clay} style={{ marginBottom: 16 }} />
+          <h2 style={{ fontFamily: FONT_DISPLAY, fontSize: 20, color: COLORS.ink, marginBottom: 8 }}>Couldn't load your data</h2>
+          <p style={{ color: COLORS.inkSoft, fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>Check your internet connection and try again.</p>
+          <button onClick={loadAll} style={{ ...primaryButtonStyle, width: "auto", padding: "10px 24px" }}>Try again</button>
+        </div>
       </div>
     );
   }
 
   const firstName = profile?.first_name || "";
-  const cardStyle2 = { background: "#f1efe8", borderRadius: 8, padding: "1rem" };
-  const labelStyle2 = { fontSize: 13, color: COLORS.inkSoft, margin: "0 0 4px" };
-  const valueStyle = { fontSize: 22, fontWeight: 500, margin: 0 };
 
   return (
     <div style={{ minHeight: "100vh", background: COLORS.paper, fontFamily: FONT_BODY }}>
       {showSettings && (
         <SettingsPanel profile={profile} onSave={saveProfile} onClose={() => setShowSettings(false)} onShowPrivacy={onShowPrivacy} onLogout={() => supabase.auth.signOut()} />
       )}
+
+      {/* Onboarding overlay for new users */}
+      {showOnboarding && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(21,32,59,0.92)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
+          <div style={{ background: COLORS.paper, borderRadius: 10, padding: "2rem 1.75rem", maxWidth: 360, width: "100%" }}>
+            <p style={{ color: COLORS.amber, fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 2, margin: "0 0 8px" }}>WELCOME TO</p>
+            <h2 style={{ fontFamily: FONT_DISPLAY, fontSize: 24, color: COLORS.ink, margin: "0 0 16px" }}>Zero Contract</h2>
+            <p style={{ fontSize: 14, color: COLORS.inkSoft, lineHeight: 1.65, marginBottom: 14 }}>
+              Track every shift you work, log when you get paid, and see a running estimate of your tax liability.
+            </p>
+            <div style={{ borderLeft: `3px solid ${COLORS.amber}`, paddingLeft: 14, marginBottom: 14 }}>
+              <p style={{ fontSize: 13, color: COLORS.inkSoft, margin: 0, lineHeight: 1.6 }}>
+                <strong style={{ color: COLORS.ink }}>Past shifts</strong> &mdash; log hours you've already worked and mark them as paid when the money arrives.
+              </p>
+            </div>
+            <div style={{ borderLeft: `3px solid ${COLORS.sage}`, paddingLeft: 14, marginBottom: 24 }}>
+              <p style={{ fontSize: 13, color: COLORS.inkSoft, margin: 0, lineHeight: 1.6 }}>
+                <strong style={{ color: COLORS.ink }}>Upcoming shifts</strong> &mdash; schedule shifts in advance so you can see what's coming in.
+              </p>
+            </div>
+            <button onClick={() => { setShowOnboarding(false); setShowForm(true); }} style={primaryButtonStyle}>
+              Add your first shift
+            </button>
+            <button onClick={() => setShowOnboarding(false)} style={{ width: "100%", marginTop: 10, padding: "10px", border: "none", background: "none", color: COLORS.inkSoft, cursor: "pointer", fontSize: 13, fontFamily: FONT_BODY }}>
+              I'll look around first
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
       <div style={{ background: COLORS.navy, padding: "1.5rem 1.25rem 2.5rem" }}>
         <div style={{ maxWidth: 560, margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
@@ -294,17 +350,19 @@ function ShiftTracker({ session, onShowPrivacy }) {
               <p style={{ color: COLORS.amber, fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 2, margin: 0 }}>ZERO CONTRACT</p>
               {firstName && <p style={{ color: COLORS.offwhite, opacity: 0.55, fontFamily: FONT_BODY, fontSize: 13, margin: "2px 0 0" }}>{firstName}'s ledger</p>}
             </div>
-            <button onClick={() => setShowSettings(true)} style={{ border: "none", background: "rgba(255,255,255,0.08)", borderRadius: 5, padding: 8, cursor: "pointer", display: "flex", alignItems: "center" }} aria-label="Settings">
+            <button onClick={() => setShowSettings(true)} style={{ border: "none", background: "rgba(255,255,255,0.08)", borderRadius: 5, padding: 8, cursor: "pointer", display: "flex" }} aria-label="Settings">
               <Settings size={16} color={COLORS.offwhite} style={{ opacity: 0.7 }} />
             </button>
           </div>
           <p style={{ color: COLORS.offwhite, opacity: 0.55, fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, margin: "0 0 4px" }}>EARNED SO FAR</p>
           <p style={{ color: COLORS.offwhite, fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 44, margin: 0, letterSpacing: -1, lineHeight: 1 }}>{formatMoney(totalEarned)}</p>
+
           {taxEstimate && (
             <button onClick={() => setShowTax((v) => !v)} style={{ marginTop: 10, border: "none", background: "rgba(255,255,255,0.08)", borderRadius: 4, padding: "6px 12px", color: COLORS.offwhite, fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, cursor: "pointer", opacity: 0.8 }}>
               {showTax ? "HIDE TAX ESTIMATE" : "SHOW TAX ESTIMATE"}
             </button>
           )}
+
           {taxEstimate && showTax && (
             <div style={{ marginTop: 12, background: "rgba(255,255,255,0.07)", borderRadius: 6, padding: "14px 16px" }}>
               <p style={{ color: COLORS.amber, fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 2, margin: "0 0 10px" }}>ESTIMATED DEDUCTIONS</p>
@@ -313,13 +371,20 @@ function ShiftTracker({ session, onShowPrivacy }) {
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", margin: "10px 0" }} />
               <TaxRow label="Est. take-home" value={taxEstimate.estimatedTakeHome} highlight />
               <p style={{ color: COLORS.offwhite, opacity: 0.4, fontFamily: FONT_BODY, fontSize: 11, margin: "10px 0 0", lineHeight: 1.4 }}>
-                Rough estimate based on {taxEstimate.region === "scotland" ? "Scottish" : "England/Wales/NI"} rates. Not financial advice.
+                Rough estimate, {taxEstimate.region === "scotland" ? "Scottish" : "England/Wales/NI"} 2025/26 rates. Not financial advice.
               </p>
             </div>
+          )}
+
+          {profile?.tax_region === "skip" && (
+            <button onClick={() => setShowSettings(true)} style={{ marginTop: 10, border: "1px dashed rgba(255,255,255,0.25)", background: "transparent", borderRadius: 4, padding: "6px 12px", color: COLORS.offwhite, fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, cursor: "pointer", opacity: 0.7 }}>
+              SET TAX REGION FOR ESTIMATES
+            </button>
           )}
         </div>
       </div>
 
+      {/* Stat strip */}
       <div style={{ maxWidth: 560, margin: "-1.25rem auto 0", padding: "0 1.25rem" }}>
         <div style={{ background: "white", borderRadius: 6, boxShadow: "0 4px 18px rgba(21,32,59,0.18)", display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}>
           <StatCell label="UPCOMING" value={formatMoney(totalUpcoming)} color={COLORS.ink} />
@@ -328,13 +393,14 @@ function ShiftTracker({ session, onShowPrivacy }) {
         </div>
       </div>
 
+      {/* Main content */}
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.75rem 1.25rem 4rem" }}>
         <button onClick={() => { resetForm(); setShowForm(true); }} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 16px 10px 14px", background: COLORS.amber, color: COLORS.navy, border: "none", borderRadius: "3px 3px 0 0", fontFamily: FONT_MONO, fontSize: 12, fontWeight: 600, letterSpacing: 1, cursor: "pointer" }}>
-          <Plus size={15} />ADD SHIFT
+          <Plus size={15} /> ADD SHIFT
         </button>
 
         {showForm && (
-          <div style={{ background: "white", borderRadius: "0 6px 6px 6px", boxShadow: "0 6px 20px rgba(21,32,59,0.15)", padding: "1.25rem 1.25rem 1.5rem", marginBottom: 28, overflow: "hidden", maxHeight: formVisible ? 700 : 0, opacity: formVisible ? 1 : 0, transform: formVisible ? "translateY(0)" : "translateY(-8px)", transition: "max-height 220ms ease, opacity 180ms ease, transform 180ms ease" }}>
+          <div style={{ background: "white", borderRadius: "0 6px 6px 6px", boxShadow: "0 6px 20px rgba(21,32,59,0.15)", padding: "1.25rem 1.25rem 1.5rem", marginBottom: 28, overflow: "hidden", maxHeight: formVisible ? 800 : 0, opacity: formVisible ? 1 : 0, transform: formVisible ? "translateY(0)" : "translateY(-8px)", transition: "max-height 220ms ease, opacity 180ms ease, transform 180ms ease" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <p style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: COLORS.inkSoft, margin: 0 }}>{editingId ? "EDIT SHIFT" : "NEW SHIFT"}</p>
               <button onClick={closeForm} style={{ border: "none", background: "none", cursor: "pointer", padding: 4, display: "flex" }}><X size={16} color={COLORS.inkSoft} /></button>
@@ -343,11 +409,11 @@ function ShiftTracker({ session, onShowPrivacy }) {
               <div><label style={fieldLabelStyle}>Date</label><input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} style={inputStyle} /></div>
               <div><label style={fieldLabelStyle}>Start</label><input type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} style={inputStyle} /></div>
               <div><label style={fieldLabelStyle}>End</label><input type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} style={inputStyle} /></div>
-              <div><label style={fieldLabelStyle}>Rate / hr</label><input type="number" step="0.01" placeholder="12.50" value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value })} style={inputStyle} /></div>
+              <div><label style={fieldLabelStyle}>Rate / hr (GBP )</label><input type="number" step="0.01" placeholder="12.50" value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value })} style={inputStyle} /></div>
               <div><label style={fieldLabelStyle}>Payday</label><input type="date" value={form.payday} onChange={(e) => setForm({ ...form, payday: e.target.value })} style={inputStyle} /></div>
-              <div><label style={fieldLabelStyle}>Notes</label><input type="text" placeholder="Covering for Sam" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} style={inputStyle} /></div>
+              <div><label style={fieldLabelStyle}>Notes</label><input type="text" placeholder="e.g. Night shift, overtime" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} style={inputStyle} /></div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 10 }}>
               <label style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, color: COLORS.inkSoft }}>
                 <input type="checkbox" checked={form.paid} onChange={(e) => setForm({ ...form, paid: e.target.checked })} /> Already paid
               </label>
@@ -355,12 +421,16 @@ function ShiftTracker({ session, onShowPrivacy }) {
                 {calcHours(form.start, form.end)}h &middot; est. {formatMoney(calcHours(form.start, form.end) * (parseFloat(form.rate) || 0))}
               </span>
             </div>
-            <button onClick={handleSave} disabled={saving} style={primaryButtonStyle}>{saving ? "Saving..." : editingId ? "Save changes" : "Add to ledger"}</button>
+            {saveError && <p style={{ color: COLORS.clay, fontSize: 13, marginBottom: 12 }}>{saveError}</p>}
+            <button onClick={handleSave} disabled={saving || offline} style={{ ...primaryButtonStyle, opacity: offline ? 0.5 : 1 }}>
+              {offline ? "No connection" : saving ? "Saving..." : editingId ? "Save changes" : "Add to ledger"}
+            </button>
+            {offline && <p style={{ fontSize: 12, color: COLORS.clay, margin: "6px 0 0", textAlign: "center" }}>You're offline. Reconnect to save shifts.</p>}
           </div>
         )}
 
-        <Ledger title="Upcoming" icon={<Calendar size={14} color={COLORS.inkSoft} />} shifts={future} emptyText="No shifts scheduled yet." onEdit={handleEdit} onDelete={handleDelete} onTogglePaid={togglePaid} />
-        <Ledger title="Past" icon={<Clock size={14} color={COLORS.inkSoft} />} shifts={[...past].reverse()} emptyText="No shifts logged yet." onEdit={handleEdit} onDelete={handleDelete} onTogglePaid={togglePaid} />
+        <Ledger title="Upcoming" icon={<Calendar size={14} color={COLORS.inkSoft} />} shifts={future} emptyText="No upcoming shifts. Tap Add Shift to schedule one." onEdit={handleEdit} onDelete={handleDelete} onTogglePaid={togglePaid} />
+        <Ledger title="Past" icon={<Clock size={14} color={COLORS.inkSoft} />} shifts={[...past].reverse()} emptyText="No past shifts logged yet. Add a shift to get started." onEdit={handleEdit} onDelete={handleDelete} onTogglePaid={togglePaid} />
       </div>
     </div>
   );
@@ -415,7 +485,8 @@ function LedgerRow({ s, onEdit, onDelete, onTogglePaid }) {
           <p style={{ margin: 0, fontFamily: FONT_MONO, fontWeight: 600, fontSize: 15, color: COLORS.ink, whiteSpace: "nowrap" }}>{formatMoney(s.earnings)}</p>
         </div>
         <p style={{ margin: "2px 0 0", fontSize: 12.5, color: COLORS.inkSoft, fontFamily: FONT_MONO }}>
-          {s.start}&ndash;{s.end} &middot; {s.hours}h &middot; {formatMoney(s.rate)}/h{s.payday ? ` &middot; pays ${formatDate(s.payday, { month: "short", day: "numeric" })}` : ""}
+          {s.start}&ndash;{s.end} &middot; {s.hours}h &middot; {formatMoney(s.rate)}/h
+          {s.payday ? ` &middot; pays ${formatDate(s.payday, { month: "short", day: "numeric" })}` : ""}
         </p>
         {s.notes && <p style={{ margin: "3px 0 0", fontSize: 12, color: COLORS.inkSoft, fontStyle: "italic" }}>{s.notes}</p>}
       </div>
@@ -462,9 +533,11 @@ function SettingsPanel({ profile, onSave, onClose, onShowPrivacy, onLogout }) {
           </select>
         </div>
         <div style={{ marginBottom: 22 }}>
-          <label style={fieldLabelStyle}>Other annual income (GBP) - optional</label>
+          <label style={fieldLabelStyle}>Other annual income (GBP)</label>
           <input type="number" step="100" placeholder="0" value={otherIncome} onChange={(e) => setOtherIncome(e.target.value)} style={inputStyle} />
-          <p style={{ fontSize: 12, color: COLORS.inkSoft, margin: "6px 0 0", lineHeight: 1.4 }}>Add other income sources so the tax estimate reflects your full picture.</p>
+          <p style={{ fontSize: 12, color: COLORS.inkSoft, margin: "6px 0 0", lineHeight: 1.4 }}>
+            Add other income so the tax estimate reflects your full picture. Optional.
+          </p>
         </div>
         <button onClick={handleSave} disabled={saving} style={primaryButtonStyle}>{saved ? "Saved" : saving ? "Saving..." : "Save changes"}</button>
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${COLORS.paperDim}`, display: "flex", gap: 12, flexWrap: "wrap" }}>
