@@ -10,6 +10,7 @@ import PlannerTab from "./tabs/PlannerTab";
 import MoneyTab from "./tabs/MoneyTab";
 import TravelTab from "./tabs/TravelTab";
 import ProfileTab from "./tabs/ProfileTab";
+import OnboardingWelcome from "./OnboardingWelcome";
 import { estimateTax } from "./taxUtils";
 
 const COLORS = { navy: "#15203B", paper: "#F7F3EC", offwhite: "#EDEAE2" };
@@ -113,6 +114,7 @@ function MainApp({ session, onShowPrivacy, offline }) {
   const [editingShift, setEditingShift] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const loadAll = async () => {
     setLoadError(false);
@@ -161,6 +163,9 @@ function MainApp({ session, onShowPrivacy, offline }) {
             sessionStorage.removeItem("zc_pending_profile");
           }
         }
+      }
+      if (shiftsData && shiftsData.length === 0) {
+        setShowOnboarding(true);
       }
     } catch (err) {
       setLoadError(true);
@@ -319,6 +324,16 @@ function MainApp({ session, onShowPrivacy, offline }) {
           onSave={saveProfile}
           onShowPrivacy={onShowPrivacy}
           onLogout={() => supabase.auth.signOut()}
+        />
+      )}
+
+      {showOnboarding && (
+        <OnboardingWelcome
+          onAddShift={() => {
+            setShowOnboarding(false);
+            openAddShift();
+          }}
+          onDismiss={() => setShowOnboarding(false)}
         />
       )}
 
