@@ -1,185 +1,155 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Calendar, Clock, Trash2, List, CalendarDays } from "lucide-react";
+import CalendarView from "./CalendarView";
 
 const COLORS = {
+  paper: "#F7F3EC",
   paperDim: "#EDE7DA",
   ink: "#1C1A17",
   inkSoft: "#6B6558",
   amber: "#E8A33D",
   sage: "#7C9070",
-  navy: "#15203B",
 };
 const FONT_MONO = "'JetBrains Mono', 'Courier New', monospace";
 
 function formatMoney(n) {
   return n.toLocaleString(undefined, { style: "currency", currency: "GBP" });
 }
-
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
-
-function pad(n) {
-  return String(n).padStart(2, "0");
+function formatDate(iso, opts) {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString(undefined, opts || { weekday: "short", month: "short", day: "numeric" });
 }
 
-function getMonthGrid(year, month) {
-  const firstOfMonth = new Date(year, month, 1);
-  const startWeekday = (firstOfMonth.getDay() + 6) % 7; // 0 = Monday
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const daysInPrevMonth = new Date(year, month, 0).getDate();
-
-  const cells = [];
-  for (let i = startWeekday - 1; i >= 0; i--) {
-    cells.push({ day: daysInPrevMonth - i, inMonth: false, dateStr: null });
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push({ day: d, inMonth: true, dateStr: `${year}-${pad(month + 1)}-${pad(d)}` });
-  }
-  let trailDay = 1;
-  while (cells.length % 7 !== 0) {
-    cells.push({ day: trailDay, inMonth: false, dateStr: null });
-    trailDay++;
-  }
-  return cells;
-}
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-export default function CalendarView({ shifts, onEdit, onDelete }) {
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
-  const [selectedDate, setSelectedDate] = useState(todayISO());
-
-  const byDate = {};
-  shifts.forEach((s) => {
-    if (!byDate[s.date]) byDate[s.date] = [];
-    byDate[s.date].push(s);
-  });
-
-  const cells = getMonthGrid(year, month);
-  const today = todayISO();
-
-  const goPrev = () => {
-    if (month === 0) { setMonth(11); setYear(year - 1); }
-    else setMonth(month - 1);
-  };
-  const goNext = () => {
-    if (month === 11) { setMonth(0); setYear(year + 1); }
-    else setMonth(month + 1);
-  };
-
-  const selectedShifts = byDate[selectedDate] || [];
+export default function PlannerTab({ future, past, onEdit, onDelete, onTogglePaid }) {
+  const [view, setView] = useState("list");
+  const allShifts = [...future, ...past];
 
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <button onClick={goPrev} aria-label="Previous month" style={navBtnStyle}>
-          <ChevronLeft size={16} color={COLORS.ink} />
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.5rem 1.25rem 5rem" }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
+        <button
+          onClick={() => setView("list")}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px",
+            background: view === "list" ? COLORS.ink : "white",
+            color: view === "list" ? "white" : COLORS.inkSoft,
+            border: `1px solid ${view === "list" ? COLORS.ink : COLORS.paperDim}`,
+            borderRadius: 6, fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, cursor: "pointer",
+          }}
+        >
+          <List size={13} /> LIST
         </button>
-        <p style={{ fontFamily: FONT_MONO, fontSize: 12, letterSpacing: 1, color: COLORS.ink, fontWeight: 600, margin: 0 }}>
-          {MONTH_NAMES[month].toUpperCase()} {year}
-        </p>
-        <button onClick={goNext} aria-label="Next month" style={navBtnStyle}>
-          <ChevronRight size={16} color={COLORS.ink} />
+        <button
+          onClick={() => setView("calendar")}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px",
+            background: view === "calendar" ? COLORS.ink : "white",
+            color: view === "calendar" ? "white" : COLORS.inkSoft,
+            border: `1px solid ${view === "calendar" ? COLORS.ink : COLORS.paperDim}`,
+            borderRadius: 6, fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, cursor: "pointer",
+          }}
+        >
+          <CalendarDays size={13} /> CALENDAR
         </button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 4 }}>
-        {DAY_LETTERS.map((d, i) => (
-          <div key={i} style={{ textAlign: "center", fontFamily: FONT_MONO, fontSize: 9, color: COLORS.inkSoft, paddingBottom: 4 }}>
-            {d}
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 18 }}>
-        {cells.map((c, i) => {
-          const dayShifts = c.dateStr ? byDate[c.dateStr] : null;
-          const hasShifts = dayShifts && dayShifts.length > 0;
-          const isToday = c.dateStr === today;
-          const isSelected = c.dateStr === selectedDate;
-          const isFuture = c.dateStr && c.dateStr >= today;
-          const anyUnpaid = hasShifts && dayShifts.some((s) => !s.paid && !isFuture);
-          const dotColor = !hasShifts ? null : isFuture ? COLORS.navy : anyUnpaid ? COLORS.amber : COLORS.sage;
-
-          return (
-            <button
-              key={i}
-              disabled={!c.inMonth}
-              onClick={() => c.dateStr && setSelectedDate(c.dateStr)}
-              style={{
-                aspectRatio: "1",
-                border: isSelected ? `2px solid ${COLORS.navy}` : isToday ? `1px solid ${COLORS.amber}` : "1px solid transparent",
-                borderRadius: 5,
-                background: c.inMonth ? "white" : "transparent",
-                cursor: c.inMonth ? "pointer" : "default",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 2,
-                padding: 2,
-                opacity: c.inMonth ? 1 : 0.3,
-              }}
-            >
-              <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: c.inMonth ? COLORS.ink : COLORS.inkSoft }}>{c.day}</span>
-              {dotColor && <span style={{ width: 5, height: 5, borderRadius: "50%", background: dotColor }} />}
-            </button>
-          );
-        })}
-      </div>
-
-      <div>
-        <p style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1.5, color: COLORS.inkSoft, marginBottom: 10 }}>
-          {new Date(selectedDate + "T00:00:00")
-            .toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
-            .toUpperCase()}
-        </p>
-        {selectedShifts.length === 0 ? (
-          <p style={{ fontSize: 13, color: COLORS.inkSoft, fontStyle: "italic" }}>No shifts on this day.</p>
-        ) : (
-          selectedShifts.map((s) => (
-            <div
-              key={s.id}
-              style={{ display: "flex", alignItems: "stretch", background: "white", border: `1px solid ${COLORS.paperDim}`, borderRadius: 4, marginBottom: 7, overflow: "hidden" }}
-            >
-              <div style={{ width: 4, background: s.paid ? COLORS.sage : COLORS.amber, flexShrink: 0 }} />
-              <div style={{ flex: 1, padding: "10px 12px", cursor: "pointer" }} onClick={() => onEdit(s)}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span style={{ fontFamily: FONT_MONO, fontSize: 12, color: COLORS.inkSoft }}>{s.start}&ndash;{s.end}</span>
-                  <span style={{ fontFamily: FONT_MONO, fontSize: 14, fontWeight: 600, color: COLORS.ink }}>{formatMoney(s.earnings)}</span>
-                </div>
-                {s.notes && <p style={{ fontSize: 12, color: COLORS.inkSoft, fontStyle: "italic", margin: "3px 0 0" }}>{s.notes}</p>}
-              </div>
-              <button
-                onClick={() => onDelete(s.id)}
-                aria-label="Delete shift"
-                style={{ border: "none", background: "none", padding: "0 11px", display: "flex", alignItems: "center", color: COLORS.inkSoft, cursor: "pointer" }}
-              >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          ))
-        )}
-      </div>
+      {view === "calendar" ? (
+        <CalendarView shifts={allShifts} onEdit={onEdit} onDelete={onDelete} />
+      ) : (
+        <>
+          <Ledger
+            title="Upcoming"
+            icon={<Calendar size={14} color={COLORS.inkSoft} />}
+            shifts={future}
+            emptyText="No upcoming shifts. Tap + to schedule one."
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onTogglePaid={onTogglePaid}
+          />
+          <Ledger
+            title="Past"
+            icon={<Clock size={14} color={COLORS.inkSoft} />}
+            shifts={[...past].reverse()}
+            emptyText="No past shifts logged yet."
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onTogglePaid={onTogglePaid}
+          />
+        </>
+      )}
     </div>
   );
 }
 
-const navBtnStyle = {
-  border: `1px solid ${COLORS.paperDim}`,
-  background: "white",
-  borderRadius: 4,
-  width: 30,
-  height: 30,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-};
+function Ledger({ title, icon, shifts, emptyText, onEdit, onDelete, onTogglePaid }) {
+  return (
+    <div style={{ marginBottom: 30 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10, paddingBottom: 8, borderBottom: `1px solid ${COLORS.paperDim}` }}>
+        {icon}
+        <h3 style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 12, letterSpacing: 1.5, color: COLORS.inkSoft, fontWeight: 600 }}>
+          {title.toUpperCase()}
+        </h3>
+      </div>
+      {shifts.length === 0
+        ? <p style={{ fontSize: 14, color: COLORS.inkSoft, fontStyle: "italic" }}>{emptyText}</p>
+        : <div>{shifts.map((s) => <LedgerRow key={s.id} s={s} onEdit={onEdit} onDelete={onDelete} onTogglePaid={onTogglePaid} />)}</div>
+      }
+    </div>
+  );
+}
+
+function LedgerRow({ s, onEdit, onDelete, onTogglePaid }) {
+  const [tearing, setTearing] = useState(false);
+  const handleToggle = (e) => {
+    e.stopPropagation();
+    setTearing(true);
+    setTimeout(() => setTearing(false), 320);
+    onTogglePaid(s);
+  };
+  const statusColor = s.paid ? COLORS.sage : COLORS.amber;
+  return (
+    <div style={{ display: "flex", alignItems: "stretch", background: "white", borderRadius: 4, marginBottom: 7, boxShadow: "0 1px 3px rgba(21,32,59,0.08)", overflow: "hidden" }}>
+      <div style={{ width: 4, background: statusColor, flexShrink: 0 }} />
+      <button
+        onClick={handleToggle}
+        aria-label={s.paid ? "Mark as unpaid" : "Mark as paid"}
+        style={{
+          border: "none",
+          borderRight: `1px dashed ${COLORS.paperDim}`,
+          background: "none",
+          padding: "0 14px",
+          display: "flex",
+          alignItems: "center",
+          cursor: "pointer",
+          transform: tearing ? "scale(0.85) rotate(-4deg)" : "scale(1)",
+          transition: "transform 220ms cubic-bezier(.34,1.56,.64,1)",
+        }}
+      >
+        <span style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 0.5, color: s.paid ? COLORS.sage : COLORS.inkSoft, fontWeight: 700 }}>
+          {s.paid ? "PAID" : "MARK"}
+        </span>
+      </button>
+      <div style={{ flex: 1, minWidth: 0, padding: "11px 14px", cursor: "pointer" }} onClick={() => onEdit(s)} role="button" tabIndex={0}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+          <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: COLORS.ink }}>{formatDate(s.date)}</p>
+          <p style={{ margin: 0, fontFamily: FONT_MONO, fontWeight: 600, fontSize: 15, color: COLORS.ink, whiteSpace: "nowrap" }}>
+            {formatMoney(s.earnings)}
+          </p>
+        </div>
+        <p style={{ margin: "2px 0 0", fontSize: 12.5, color: COLORS.inkSoft, fontFamily: FONT_MONO }}>
+          {s.start}&ndash;{s.end} &middot; {s.hours}h &middot; {formatMoney(s.rate)}/h
+          {s.payday ? ` &middot; pays ${formatDate(s.payday, { month: "short", day: "numeric" })}` : ""}
+        </p>
+        {s.notes && <p style={{ margin: "3px 0 0", fontSize: 12, color: COLORS.inkSoft, fontStyle: "italic" }}>{s.notes}</p>}
+      </div>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete(s.id); }}
+        aria-label="Delete shift"
+        style={{ border: "none", background: "none", padding: "0 12px", display: "flex", alignItems: "center", color: COLORS.inkSoft, cursor: "pointer" }}
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
+  );
+}
