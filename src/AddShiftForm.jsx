@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
+import { getDistance, estimateTravelCost, attachAutocomplete } from "./mapsUtils";
 
 const COLORS = {
   paper: "#F7F3EC",
@@ -67,7 +68,7 @@ function formatMoney(n) {
   return n.toLocaleString(undefined, { style: "currency", currency: "GBP" });
 }
 
-export default function AddShiftForm({ editingShift, onSave, onClose, saving, saveError }) {
+export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddress, onSave, onClose, saving, saveError }) {
   const [form, setForm] = useState({
     date: todayISO(),
     start: "09:00",
@@ -77,7 +78,20 @@ export default function AddShiftForm({ editingShift, onSave, onClose, saving, sa
     paid: false,
     notes: "",
     travelCost: "0",
+    workAddress: lastWorkAddress || "",
+    travelMode: "driving",
   });
+  const [estBusy, setEstBusy] = useState(false);
+  const [estError, setEstError] = useState("");
+  const [estInfo, setEstInfo] = useState("");
+  const [distanceKm, setDistanceKm] = useState(null);
+  const workAddressRef = useRef(null);
+
+  useEffect(() => {
+    attachAutocomplete(workAddressRef.current, (address) =>
+      setForm((f) => ({ ...f, workAddress: address }))
+    );
+  }, []);
 
   useEffect(() => {
     if (editingShift) {
@@ -90,9 +104,40 @@ export default function AddShiftForm({ editingShift, onSave, onClose, saving, sa
         paid: editingShift.paid,
         notes: editingShift.notes || "",
         travelCost: String(editingShift.travelCost || 0),
+        workAddress: editingShift.workAddress || "",
+        travelMode: editingShift.travelMode || "driving",
       });
+      setDistanceKm(editingShift.distanceKm || null);
     }
   }, [editingShift]);
+
+  const handleEstimate = async () => {
+    setEstError("");
+    setEstInfo("");
+    if (!homeAddress) {
+      setEstError("Add your home address in the Profile tab first, then come back here.");
+      return;
+    }
+    if (!form.workAddress.trim()) {
+      setEstError("Type the workplace address first.");
+      return;
+    }
+    setEstBusy(true);
+    try {
+      const result = await getDistance(homeAddress, form.workAddress.trim(), form.travelMode);
+      setDistanceKm(result.distanceKm);
+      const cost = estimateTravelCost(result.distanceKm, form.travelMode, result.fare);
+      if (cost != null) {
+        setForm((f) => ({ ...f, travelCost: String(cost) }));
+        setEstInfo(result.distanceKm + " km each way, about " + result.durationText + ". Round trip estimate filled in below.");
+      } else {
+        setEstInfo(result.distanceKm + " km each way, about " + result.durationText + ". Google doesn't know the fare here, so type your usual return fare into Travel cost.");
+      }
+    } catch (err) {
+      setEstError(err.message || "Something went wrong looking that up.");
+    }
+    setEstBusy(false);
+  };
 
   const hours = calcHours(form.start, form.end);
   const est = hours * (parseFloat(form.rate) || 0);
@@ -150,6 +195,55 @@ export default function AddShiftForm({ editingShift, onSave, onClose, saving, sa
         </div>
 
         <div style={{ marginBottom: 14 }}>
+          <label style={fieldLabelStyle}>Workplace address (optional)</label>
+          <input
+            ref={workAddressRef}
+            type="text"
+            placeholder="Start typing the workplace address..."
+            value={form.workAddress}
+            onChange={(e) => setForm({ ...form, workAddress: e.target.value })}
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10, alignItems: "end", marginBottom: 8 }}>
+          <div>
+            <label style={fieldLabelStyle}>How you'll travel</label>
+            <select
+              value={form.travelMode}
+              onChange={(e) => setForm({ ...form, travelMode: e.target.value })}
+              style={{ ...inputStyle, appearance: "none", cursor: "pointer" }}
+            >
+              <option value="driving">Driving</option>
+              <option value="transit">Public transport</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={handleEstimate}
+            disabled={estBusy}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 4,
+              border: "1px solid " + COLORS.ink,
+              background: "white",
+              color: COLORS.ink,
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600,
+              fontFamily: FONT_MONO,
+              letterSpacing: 0.5,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {estBusy ? "..." : "ESTIMATE TRAVEL"}
+          </button>
+        </div>
+
+        {estError && <p style={{ color: COLORS.clay, fontSize: 12.5, margin: "0 0 10px", lineHeight: 1.4 }}>{estError}</p>}
+        {estInfo && <p style={{ color: COLORS.inkSoft, fontSize: 12.5, margin: "0 0 10px", lineHeight: 1.4 }}>{estInfo}</p>}
+
+        <div style={{ marginBottom: 14 }}>
           <label style={fieldLabelStyle}>Notes</label>
           <input type="text" placeholder="e.g. Covering for Sam" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} style={inputStyle} />
         </div>
@@ -165,7 +259,7 @@ export default function AddShiftForm({ editingShift, onSave, onClose, saving, sa
 
         {saveError && <p style={{ color: COLORS.clay, fontSize: 13, marginBottom: 12 }}>{saveError}</p>}
 
-        <button onClick={() => onSave(form)} disabled={saving} style={primaryButtonStyle}>
+        <button onClick={() => onSave({ ...form, distanceKm })} disabled={saving} style={primaryButtonStyle}>
           {saving ? "Saving..." : editingShift ? "Save changes" : "Add to ledger"}
         </button>
       </div>

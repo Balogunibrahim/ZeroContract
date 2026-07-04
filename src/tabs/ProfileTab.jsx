@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { LogOut } from "lucide-react";
 import NotificationToggle from "../NotificationToggle";
+import { attachAutocomplete } from "../mapsUtils";
 
 const COLORS = {
   paper: "#F7F3EC",
@@ -57,21 +58,34 @@ export default function ProfileTab({ profile, session, onSave, onShowPrivacy, on
   const [firstName, setFirstName] = useState(profile?.first_name || "");
   const [lastName, setLastName] = useState(profile?.last_name || "");
   const [profession, setProfession] = useState(profile?.profession || "");
+  const [homeAddress, setHomeAddress] = useState(profile?.home_address || "");
+  const homeAddressRef = useRef(null);
+
+  useEffect(() => {
+    attachAutocomplete(homeAddressRef.current, (address) => setHomeAddress(address));
+  }, []);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveErr, setSaveErr] = useState("");
 
   const handleSave = async () => {
     setSaving(true);
-    await onSave({
+    setSaveErr("");
+    const errMsg = await onSave({
       first_name: firstName.trim(),
       last_name: lastName.trim(),
       profession: profession.trim(),
+      home_address: homeAddress.trim(),
       tax_region: taxRegion,
       other_income: parseFloat(otherIncome) || 0,
     });
     setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    if (errMsg) {
+      setSaveErr("Couldn't save: " + errMsg);
+    } else {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
   };
 
   return (
@@ -95,6 +109,20 @@ export default function ProfileTab({ profile, session, onSave, onShowPrivacy, on
         <input type="text" value={profession} onChange={(e) => setProfession(e.target.value)} style={inputStyle} />
       </div>
       <div style={{ marginBottom: 14 }}>
+        <label style={fieldLabelStyle}>Home address</label>
+        <input
+          ref={homeAddressRef}
+          type="text"
+          placeholder="Start typing your address..."
+          value={homeAddress}
+          onChange={(e) => setHomeAddress(e.target.value)}
+          style={inputStyle}
+        />
+        <p style={{ fontSize: 12, color: COLORS.inkSoft, margin: "6px 0 0", lineHeight: 1.4 }}>
+          Used to estimate travel distance and cost to your shifts. Optional.
+        </p>
+      </div>
+      <div style={{ marginBottom: 14 }}>
         <label style={fieldLabelStyle}>Tax region</label>
         <select value={taxRegion} onChange={(e) => setTaxRegion(e.target.value)} style={{ ...inputStyle, appearance: "none", cursor: "pointer" }}>
           <option value="rest_of_uk">England, Wales or Northern Ireland</option>
@@ -109,6 +137,7 @@ export default function ProfileTab({ profile, session, onSave, onShowPrivacy, on
           Add other income so the tax estimate reflects your full picture. Optional.
         </p>
       </div>
+      {saveErr && <p style={{ color: COLORS.clay, fontSize: 13, margin: "0 0 12px", lineHeight: 1.4 }}>{saveErr}</p>}
       <button onClick={handleSave} disabled={saving} style={primaryButtonStyle}>
         {saved ? "Saved" : saving ? "Saving..." : "Save changes"}
       </button>

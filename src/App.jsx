@@ -138,6 +138,8 @@ function MainApp({ session, onShowPrivacy, offline }) {
             paid: s.paid,
             notes: s.notes || "",
             travelCost: Number(s.travel_cost || 0),
+            workAddress: s.work_address || "",
+            distanceKm: s.distance_km ? Number(s.distance_km) : null,
           }))
         );
       }
@@ -216,6 +218,8 @@ function MainApp({ session, onShowPrivacy, offline }) {
         paid: !!form.paid,
         notes: form.notes,
         travel_cost: parseFloat(form.travelCost) || 0,
+        work_address: form.workAddress ? form.workAddress.trim() : null,
+        distance_km: form.distanceKm || null,
       };
       const { error } = editingShift
         ? await supabase.from("shifts").update(row).eq("id", editingShift.id)
@@ -244,8 +248,13 @@ function MainApp({ session, onShowPrivacy, offline }) {
   };
 
   const saveProfile = async (updates) => {
-    const { data } = await supabase.from("profiles").update(updates).eq("id", session.user.id).select().single();
+    const { data, error } = await supabase
+      .from("profiles")
+      .upsert({ id: session.user.id, ...updates })
+      .select()
+      .single();
     if (data) setProfile(data);
+    return error ? error.message : null;
   };
 
   const today = todayISO();
@@ -340,7 +349,15 @@ function MainApp({ session, onShowPrivacy, offline }) {
       <BottomNav active={activeTab} onChange={setActiveTab} onAddShift={openAddShift} />
 
       {showForm && (
-        <AddShiftForm editingShift={editingShift} onSave={handleSave} onClose={closeForm} saving={saving} saveError={saveError} />
+        <AddShiftForm
+          editingShift={editingShift}
+          homeAddress={profile?.home_address || ""}
+          lastWorkAddress={[...enriched].reverse().find((s) => s.workAddress)?.workAddress || ""}
+          onSave={handleSave}
+          onClose={closeForm}
+          saving={saving}
+          saveError={saveError}
+        />
       )}
     </div>
   );
