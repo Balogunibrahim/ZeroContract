@@ -1,21 +1,21 @@
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "./supabaseClient";
-import AuthScreen from "./AuthScreen";
-import PrivacyPolicy from "./PrivacyPolicy";
-import ResetPassword from "./ResetPassword";
-import BottomNav from "./BottomNav";
-import AddShiftForm from "./AddShiftForm";
+import { supabase } from "./lib/supabaseClient";
+import AuthScreen from "./components/AuthScreen";
+import PrivacyPolicy from "./components/PrivacyPolicy";
+import ResetPassword from "./components/ResetPassword";
+import BottomNav from "./components/BottomNav";
+import AddShiftForm from "./components/AddShiftForm";
 import HomeTab from "./tabs/HomeTab";
 import PlannerTab from "./tabs/PlannerTab";
 import MoneyTab from "./tabs/MoneyTab";
 import TravelTab from "./tabs/TravelTab";
 import ProfileTab from "./tabs/ProfileTab";
-import OnboardingWelcome from "./OnboardingWelcome";
-import { estimateTax } from "./taxUtils";
+import OnboardingWelcome from "./components/OnboardingWelcome";
+import { estimateTax } from "./utils/taxUtils";
 
-const COLORS = { navy: "#15203B", paper: "#F7F3EC", offwhite: "#EDEAE2" };
-const FONT_MONO = "'JetBrains Mono', 'Courier New', monospace";
-const FONT_DISPLAY = "'Roboto Slab', 'Georgia', serif";
+const COLORS = { navy: "#efeeec", paper: "#efeeec", offwhite: "#6f6c66" };
+const FONT_MONO = "'Inter', sans-serif";
+const FONT_DISPLAY = "'Archivo Black', 'Arial Black', sans-serif";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -27,7 +27,7 @@ function ensureFonts() {
   link.id = "zc-fonts";
   link.rel = "stylesheet";
   link.href =
-    "https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap";
+    "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap";
   document.head.appendChild(link);
 }
 
@@ -303,7 +303,7 @@ function MainApp({ session, onShowPrivacy, offline }) {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.paper }}>
+    <div style={{ minHeight: "100vh", background: COLORS.paper, textAlign: "left", fontFamily: "'Inter', -apple-system, sans-serif" }}>
       {offline && (
         <div style={{ background: "#C2543F", color: "white", padding: "8px 16px", textAlign: "center", fontSize: 12.5, fontFamily: "'Inter', sans-serif" }}>
           No internet connection. Changes will sync when you're back online.
@@ -314,11 +314,12 @@ function MainApp({ session, onShowPrivacy, offline }) {
         <HomeTab
           firstName={profile?.first_name || ""}
           totalEarned={totalEarned}
-          totalUpcoming={totalUpcoming}
+          upcomingCount={future.length}
           totalUnpaid={totalUnpaid}
           nextPayday={nextPayday}
           taxEstimate={taxEstimate}
           nextShift={nextShift}
+          onSeeBreakdown={() => setActiveTab("money")}
         />
       )}
       {activeTab === "planner" && (

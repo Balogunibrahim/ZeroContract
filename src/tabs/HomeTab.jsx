@@ -1,92 +1,127 @@
-const COLORS = {
-  navy: "#15203B",
-  paper: "#F7F3EC",
-  paperDim: "#EDE7DA",
-  ink: "#1C1A17",
-  inkSoft: "#6B6558",
-  amber: "#E8A33D",
-  clay: "#C2543F",
-  offwhite: "#EDEAE2",
-};
-const FONT_DISPLAY = "'Roboto Slab', 'Georgia', serif";
-const FONT_BODY = "'Inter', -apple-system, sans-serif";
-const FONT_MONO = "'JetBrains Mono', 'Courier New', monospace";
+import {
+  COLORS,
+  FONTS,
+  ScreenLabel,
+  DisplayHeader,
+  formatMoney,
+  formatRate,
+  formatDate,
+} from "../theme";
 
-function formatMoney(n) {
-  return n.toLocaleString(undefined, { style: "currency", currency: "GBP" });
-}
-function formatDate(iso, opts) {
-  if (!iso) return "";
-  const d = new Date(iso + "T00:00:00");
-  return d.toLocaleDateString(undefined, opts || { weekday: "short", month: "short", day: "numeric" });
-}
-
-export default function HomeTab({ firstName, totalEarned, totalUpcoming, totalUnpaid, nextPayday, taxEstimate, nextShift }) {
+export default function HomeTab({
+  firstName,
+  totalEarned,
+  upcomingCount,
+  totalUnpaid,
+  nextPayday,
+  taxEstimate,
+  nextShift,
+  onSeeBreakdown,
+}) {
   return (
-    <div>
-      <div style={{ background: COLORS.navy, padding: "1.5rem 1.25rem 2.5rem" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto" }}>
-          <p style={{ color: COLORS.amber, fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 2, margin: 0 }}>ZERO CONTRACT</p>
-          {firstName && (
-            <p style={{ color: COLORS.offwhite, opacity: 0.55, fontFamily: FONT_BODY, fontSize: 13, margin: "2px 0 16px" }}>
-              {firstName}'s ledger
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.75rem 1.25rem 6rem" }}>
+      <ScreenLabel>
+        Zero Contract{firstName ? ` · ${firstName}'s ledger` : ""}
+      </ScreenLabel>
+
+      <DisplayHeader>Earned</DisplayHeader>
+
+      <p style={{ ...labelSmall, marginBottom: 6 }}>Earned so far</p>
+      <p style={amountStyle}>{formatMoney(totalEarned)}</p>
+
+      {taxEstimate && (
+        <p style={{ fontFamily: FONTS.body, fontSize: 13.5, color: COLORS.inkSoft, margin: "10px 0 0" }}>
+          Est. take home {formatMoney(taxEstimate.estimatedTakeHome)} &nbsp;&mdash;&nbsp;
+          <button onClick={onSeeBreakdown} style={linkStyle}>see breakdown</button>
+        </p>
+      )}
+
+      {/* Three-up stat strip */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          borderTop: `1px solid ${COLORS.line}`,
+          borderBottom: `1px solid ${COLORS.line}`,
+          margin: "1.75rem 0 0",
+        }}
+      >
+        <Stat label="Upcoming" value={String(upcomingCount)} />
+        <Stat label="Unpaid" value={formatMoney(totalUnpaid)} border />
+        <Stat
+          label="Next payday"
+          value={nextPayday ? formatDate(nextPayday, { weekday: "short", month: "short", day: "numeric" }) : "—"}
+          border
+        />
+      </div>
+
+      {/* Next up */}
+      <p style={{ ...labelSmall, margin: "2rem 0 12px" }}>Next up</p>
+      {nextShift ? (
+        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 2, padding: "16px 18px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
+            <p style={{ fontFamily: FONTS.body, fontWeight: 700, fontSize: 18, color: COLORS.ink, margin: 0 }}>
+              {formatDate(nextShift.date)}
+            </p>
+            <p style={{ fontFamily: FONTS.body, fontWeight: 700, fontSize: 18, color: COLORS.ink, margin: 0, whiteSpace: "nowrap" }}>
+              {formatMoney(nextShift.earnings)}
+            </p>
+          </div>
+          <p style={{ fontFamily: FONTS.body, fontSize: 13, color: COLORS.inkSoft, margin: "8px 0 0" }}>
+            {nextShift.start} &rarr; {nextShift.end} &middot; {nextShift.hours.toFixed(1)}h &middot; {formatRate(nextShift.rate)}/h
+          </p>
+          {nextShift.notes && (
+            <p style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.ink, margin: "6px 0 0" }}>
+              {nextShift.notes}
             </p>
           )}
-          <p style={{ color: COLORS.offwhite, opacity: 0.55, fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, margin: "0 0 4px" }}>
-            EARNED SO FAR
-          </p>
-          <p style={{ color: COLORS.offwhite, fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 44, margin: 0, letterSpacing: -1, lineHeight: 1 }}>
-            {formatMoney(totalEarned)}
-          </p>
-
-          {taxEstimate && (
-            <div style={{ marginTop: 14, background: "rgba(255,255,255,0.07)", borderRadius: 6, padding: "14px 16px" }}>
-              <p style={{ color: COLORS.amber, fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 2, margin: "0 0 8px" }}>
-                EST. TAKE-HOME
-              </p>
-              <p style={{ color: COLORS.offwhite, fontFamily: FONT_MONO, fontSize: 20, fontWeight: 600, margin: 0 }}>
-                {formatMoney(taxEstimate.estimatedTakeHome)}
-              </p>
-              <p style={{ color: COLORS.offwhite, opacity: 0.5, fontSize: 11, margin: "6px 0 0" }}>
-                after estimated tax and NI &mdash; see Money tab for details
-              </p>
-            </div>
-          )}
         </div>
-      </div>
-
-      <div style={{ maxWidth: 560, margin: "-1.25rem auto 0", padding: "0 1.25rem" }}>
-        <div style={{ background: "white", borderRadius: 6, boxShadow: "0 4px 18px rgba(21,32,59,0.18)", display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}>
-          <StatCell label="UPCOMING" value={formatMoney(totalUpcoming)} color={COLORS.ink} />
-          <StatCell label="UNPAID" value={formatMoney(totalUnpaid)} color={totalUnpaid > 0 ? COLORS.clay : COLORS.ink} border />
-          <StatCell label="NEXT PAYDAY" value={nextPayday ? formatDate(nextPayday, { month: "short", day: "numeric" }) : "-"} color={COLORS.ink} border />
-        </div>
-      </div>
-
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.5rem 1.25rem 5rem" }}>
-        {nextShift ? (
-          <div>
-            <p style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1.5, color: COLORS.inkSoft, marginBottom: 10 }}>NEXT UP</p>
-            <div style={{ background: "white", border: `1px solid ${COLORS.paperDim}`, borderRadius: 6, padding: "14px 16px" }}>
-              <p style={{ margin: 0, fontWeight: 600, fontSize: 15, color: COLORS.ink }}>{formatDate(nextShift.date)}</p>
-              <p style={{ margin: "4px 0 0", fontSize: 13, color: COLORS.inkSoft, fontFamily: FONT_MONO }}>
-                {nextShift.start}&ndash;{nextShift.end} &middot; {formatMoney(nextShift.earnings)}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <p style={{ fontSize: 14, color: COLORS.inkSoft, fontStyle: "italic" }}>No upcoming shifts. Tap + to add one.</p>
-        )}
-      </div>
+      ) : (
+        <p style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.inkSoft }}>
+          No upcoming shifts. Tap + to add one.
+        </p>
+      )}
     </div>
   );
 }
 
-function StatCell({ label, value, color, border }) {
+const labelSmall = {
+  fontFamily: FONTS.body,
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: 1.5,
+  textTransform: "uppercase",
+  color: COLORS.label,
+};
+
+const amountStyle = {
+  fontFamily: FONTS.display,
+  fontWeight: 400,
+  fontSize: "clamp(44px, 13vw, 56px)",
+  lineHeight: 1,
+  letterSpacing: "-0.02em",
+  color: COLORS.ink,
+  margin: 0,
+};
+
+const linkStyle = {
+  border: "none",
+  background: "none",
+  padding: 0,
+  color: COLORS.inkSoft,
+  textDecoration: "underline",
+  cursor: "pointer",
+  fontFamily: FONTS.body,
+  fontSize: 13.5,
+};
+
+function Stat({ label, value, border }) {
   return (
-    <div style={{ padding: "14px 12px", borderLeft: border ? `1px solid ${COLORS.paperDim}` : "none", textAlign: "center" }}>
-      <p style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 1, color: COLORS.inkSoft, margin: "0 0 5px" }}>{label}</p>
-      <p style={{ fontFamily: FONT_MONO, fontSize: 15, fontWeight: 600, color, margin: 0 }}>{value}</p>
+    <div style={{ padding: "14px 4px 16px", borderLeft: border ? `1px solid ${COLORS.line}` : "none" }}>
+      <p style={{ ...labelSmall, fontSize: 10, letterSpacing: 1, marginBottom: 8 }}>{label}</p>
+      <p style={{ fontFamily: FONTS.body, fontSize: 16, fontWeight: 700, color: COLORS.ink, margin: 0 }}>
+        {value}
+      </p>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient";
+import { supabase } from "../lib/supabaseClient";
 
 // This is the "public key" half of your app's notification signature.
 // It's safe for this to be visible in the app code.

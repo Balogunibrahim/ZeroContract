@@ -1,16 +1,5 @@
 import { Home, CalendarDays, Wallet, Car, User, Plus } from "lucide-react";
-
-const COLORS = {
-  navy: "#15203B",
-  paper: "#F7F3EC",
-  paperDim: "#EDE7DA",
-  ink: "#1C1A17",
-  inkSoft: "#6B6558",
-  amber: "#E8A33D",
-  amberDeep: "#C97F1E",
-};
-
-const FONT_MONO = "'JetBrains Mono', 'Courier New', monospace";
+import { COLORS, FONTS } from "../theme";
 
 const TABS = [
   { id: "home", label: "Home", icon: Home },
@@ -24,36 +13,39 @@ export default function BottomNav({ active, onChange, onAddShift }) {
   return (
     <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 40 }}>
       <div style={{ position: "relative", maxWidth: 560, margin: "0 auto" }}>
+        {/* Floating add button */}
         <button
           onClick={onAddShift}
           aria-label="Add shift"
           style={{
             position: "absolute",
-            right: 16,
-            bottom: 64,
-            width: 52,
-            height: 52,
+            right: 18,
+            bottom: 82,
+            width: 56,
+            height: 56,
             borderRadius: "50%",
-            background: COLORS.amber,
-            border: `3px solid ${COLORS.paper}`,
-            boxShadow: "0 4px 14px rgba(21,32,59,0.35)",
+            background: COLORS.black,
+            border: "none",
+            boxShadow: "0 6px 18px rgba(0,0,0,0.28)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
           }}
         >
-          <Plus size={24} color={COLORS.navy} />
+          <Plus size={26} color="#ffffff" />
         </button>
 
+        {/* Tab bar */}
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(5, 1fr)",
-            background: COLORS.paper,
-            borderTop: `1px solid ${COLORS.paperDim}`,
-            boxShadow: "0 -2px 10px rgba(21,32,59,0.08)",
-            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            alignItems: "center",
+            background: COLORS.bg,
+            borderTop: `1px solid ${COLORS.line}`,
+            padding: "8px 10px",
+            paddingBottom: "calc(8px + env(safe-area-inset-bottom, 0px))",
           }}
         >
           {TABS.map((t) => {
@@ -67,24 +59,26 @@ export default function BottomNav({ active, onChange, onAddShift }) {
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: 3,
-                  padding: "9px 4px 8px",
-                  border: "none",
+                  gap: 5,
+                  padding: "8px 4px",
+                  border: `1px solid ${isActive ? COLORS.ink : "transparent"}`,
+                  borderRadius: 2,
                   background: "none",
                   cursor: "pointer",
                 }}
               >
-                <Icon size={19} color={isActive ? COLORS.amberDeep : COLORS.inkSoft} strokeWidth={isActive ? 2.4 : 1.8} />
+                <Icon size={20} color={isActive ? COLORS.ink : COLORS.label} strokeWidth={isActive ? 2.2 : 1.8} />
                 <span
                   style={{
-                    fontFamily: FONT_MONO,
-                    fontSize: 9,
-                    letterSpacing: 0.5,
-                    color: isActive ? COLORS.ink : COLORS.inkSoft,
-                    fontWeight: isActive ? 600 : 400,
+                    fontFamily: FONTS.body,
+                    fontSize: 9.5,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    color: isActive ? COLORS.ink : COLORS.label,
+                    fontWeight: isActive ? 700 : 500,
                   }}
                 >
-                  {t.label.toUpperCase()}
+                  {t.label}
                 </span>
               </button>
             );

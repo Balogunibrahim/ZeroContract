@@ -1,19 +1,6 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
-
-const COLORS = {
-  paperDim: "#EDE7DA",
-  ink: "#1C1A17",
-  inkSoft: "#6B6558",
-  amber: "#E8A33D",
-  sage: "#7C9070",
-  navy: "#15203B",
-};
-const FONT_MONO = "'JetBrains Mono', 'Courier New', monospace";
-
-function formatMoney(n) {
-  return n.toLocaleString(undefined, { style: "currency", currency: "GBP" });
-}
+import { COLORS, FONTS, formatMoney } from "../theme";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -29,20 +16,13 @@ function getMonthGrid(year, month) {
   const firstOfMonth = new Date(year, month, 1);
   const startWeekday = (firstOfMonth.getDay() + 6) % 7; // 0 = Monday
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const daysInPrevMonth = new Date(year, month, 0).getDate();
 
   const cells = [];
-  for (let i = startWeekday - 1; i >= 0; i--) {
-    cells.push({ day: daysInPrevMonth - i, inMonth: false, dateStr: null });
-  }
+  for (let i = 0; i < startWeekday; i++) cells.push({ day: null, dateStr: null });
   for (let d = 1; d <= daysInMonth; d++) {
-    cells.push({ day: d, inMonth: true, dateStr: `${year}-${pad(month + 1)}-${pad(d)}` });
+    cells.push({ day: d, dateStr: `${year}-${pad(month + 1)}-${pad(d)}` });
   }
-  let trailDay = 1;
-  while (cells.length % 7 !== 0) {
-    cells.push({ day: trailDay, inMonth: false, dateStr: null });
-    trailDay++;
-  }
+  while (cells.length % 7 !== 0) cells.push({ day: null, dateStr: null });
   return cells;
 }
 
@@ -78,108 +58,99 @@ export default function CalendarView({ shifts, onEdit, onDelete }) {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <button onClick={goPrev} aria-label="Previous month" style={navBtnStyle}>
-          <ChevronLeft size={16} color={COLORS.ink} />
+      {/* Month nav */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <button onClick={goPrev} aria-label="Previous month" style={arrowStyle}>
+          <ChevronLeft size={20} color={COLORS.navy} />
         </button>
-        <p style={{ fontFamily: FONT_MONO, fontSize: 12, letterSpacing: 1, color: COLORS.ink, fontWeight: 600, margin: 0 }}>
-          {MONTH_NAMES[month].toUpperCase()} {year}
+        <p style={{ fontFamily: FONTS.body, fontSize: 13, fontWeight: 600, letterSpacing: 2, color: COLORS.navy, margin: 0, textTransform: "uppercase" }}>
+          {MONTH_NAMES[month]} {year}
         </p>
-        <button onClick={goNext} aria-label="Next month" style={navBtnStyle}>
-          <ChevronRight size={16} color={COLORS.ink} />
+        <button onClick={goNext} aria-label="Next month" style={arrowStyle}>
+          <ChevronRight size={20} color={COLORS.navy} />
         </button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 4 }}>
+      {/* Weekday letters */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6, marginBottom: 6 }}>
         {DAY_LETTERS.map((d, i) => (
-          <div key={i} style={{ textAlign: "center", fontFamily: FONT_MONO, fontSize: 9, color: COLORS.inkSoft, paddingBottom: 4 }}>
+          <div key={i} style={{ textAlign: "center", fontFamily: FONTS.body, fontSize: 11, fontWeight: 600, color: COLORS.label }}>
             {d}
           </div>
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 18 }}>
+      {/* Day grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6, marginBottom: 22 }}>
         {cells.map((c, i) => {
-          const dayShifts = c.dateStr ? byDate[c.dateStr] : null;
+          if (!c.day) return <div key={i} />;
+          const dayShifts = byDate[c.dateStr];
           const hasShifts = dayShifts && dayShifts.length > 0;
           const isToday = c.dateStr === today;
           const isSelected = c.dateStr === selectedDate;
-          const isFuture = c.dateStr && c.dateStr >= today;
-          const anyUnpaid = hasShifts && dayShifts.some((s) => !s.paid && !isFuture);
-          const dotColor = !hasShifts ? null : isFuture ? COLORS.navy : anyUnpaid ? COLORS.amber : COLORS.sage;
+          const allPaid = hasShifts && dayShifts.every((s) => s.paid);
+          const dotColor = !hasShifts ? null : allPaid ? "#c9c6be" : COLORS.navy;
+          const boxed = isSelected || isToday;
 
           return (
             <button
               key={i}
-              disabled={!c.inMonth}
-              onClick={() => c.dateStr && setSelectedDate(c.dateStr)}
+              onClick={() => setSelectedDate(c.dateStr)}
               style={{
                 aspectRatio: "1",
-                border: isSelected ? `2px solid ${COLORS.navy}` : isToday ? `1px solid ${COLORS.amber}` : "1px solid transparent",
-                borderRadius: 5,
-                background: c.inMonth ? "white" : "transparent",
-                cursor: c.inMonth ? "pointer" : "default",
+                border: boxed ? `1.5px solid ${COLORS.ink}` : `1px solid ${COLORS.border}`,
+                borderRadius: 2,
+                background: COLORS.card,
+                cursor: "pointer",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 2,
+                gap: 4,
                 padding: 2,
-                opacity: c.inMonth ? 1 : 0.3,
               }}
             >
-              <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: c.inMonth ? COLORS.ink : COLORS.inkSoft }}>{c.day}</span>
+              <span style={{ fontFamily: FONTS.body, fontSize: 13, color: COLORS.navy }}>{c.day}</span>
               {dotColor && <span style={{ width: 5, height: 5, borderRadius: "50%", background: dotColor }} />}
             </button>
           );
         })}
       </div>
 
-      <div>
-        <p style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1.5, color: COLORS.inkSoft, marginBottom: 10 }}>
-          {new Date(selectedDate + "T00:00:00")
-            .toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
-            .toUpperCase()}
-        </p>
-        {selectedShifts.length === 0 ? (
-          <p style={{ fontSize: 13, color: COLORS.inkSoft, fontStyle: "italic" }}>No shifts on this day.</p>
-        ) : (
-          selectedShifts.map((s) => (
-            <div
-              key={s.id}
-              style={{ display: "flex", alignItems: "stretch", background: "white", border: `1px solid ${COLORS.paperDim}`, borderRadius: 4, marginBottom: 7, overflow: "hidden" }}
-            >
-              <div style={{ width: 4, background: s.paid ? COLORS.sage : COLORS.amber, flexShrink: 0 }} />
-              <div style={{ flex: 1, padding: "10px 12px", cursor: "pointer" }} onClick={() => onEdit(s)}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span style={{ fontFamily: FONT_MONO, fontSize: 12, color: COLORS.inkSoft }}>{s.start}&ndash;{s.end}</span>
-                  <span style={{ fontFamily: FONT_MONO, fontSize: 14, fontWeight: 600, color: COLORS.ink }}>{formatMoney(s.earnings)}</span>
-                </div>
-                {s.notes && <p style={{ fontSize: 12, color: COLORS.inkSoft, fontStyle: "italic", margin: "3px 0 0" }}>{s.notes}</p>}
+      {/* Selected day */}
+      <p style={{ fontFamily: FONTS.body, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: COLORS.label, marginBottom: 12 }}>
+        {new Date(selectedDate + "T00:00:00")
+          .toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
+          .toUpperCase()}
+      </p>
+
+      {selectedShifts.length === 0 ? (
+        <p style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.inkSoft, fontStyle: "italic" }}>No shifts on this day.</p>
+      ) : (
+        selectedShifts.map((s) => (
+          <div key={s.id} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "14px 0", borderBottom: `1px solid ${COLORS.line}` }}>
+            <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => onEdit(s)}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                <span style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.inkSoft }}>{s.start}—{s.end}</span>
+                <span style={{ fontFamily: FONTS.body, fontSize: 16, fontWeight: 700, color: COLORS.ink }}>{formatMoney(s.earnings)}</span>
               </div>
-              <button
-                onClick={() => onDelete(s.id)}
-                aria-label="Delete shift"
-                style={{ border: "none", background: "none", padding: "0 11px", display: "flex", alignItems: "center", color: COLORS.inkSoft, cursor: "pointer" }}
-              >
-                <Trash2 size={13} />
-              </button>
+              {s.notes && <p style={{ fontFamily: FONTS.body, fontSize: 13.5, color: COLORS.ink, margin: "5px 0 0" }}>{s.notes}</p>}
             </div>
-          ))
-        )}
-      </div>
+            <button onClick={() => onDelete(s.id)} aria-label="Delete shift" style={{ border: "none", background: "none", padding: 0, color: COLORS.label, cursor: "pointer", display: "flex" }}>
+              <Trash2 size={15} />
+            </button>
+          </div>
+        ))
+      )}
     </div>
   );
 }
 
-const navBtnStyle = {
-  border: `1px solid ${COLORS.paperDim}`,
-  background: "white",
-  borderRadius: 4,
-  width: 30,
-  height: 30,
+const arrowStyle = {
+  border: "none",
+  background: "none",
+  padding: 4,
+  cursor: "pointer",
   display: "flex",
   alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
 };
