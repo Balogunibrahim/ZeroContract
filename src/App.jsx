@@ -217,23 +217,37 @@ function MainApp({ session, onShowPrivacy, offline }) {
       if (profileData) {
         setProfile(profileData);
       } else {
+        // Build the profile either from the pending signup form (email signup)
+        // or from provider metadata (Google / Apple / Facebook sign-in).
         const pending = sessionStorage.getItem("zc_pending_profile");
+        let fields;
         if (pending) {
-          const parsed = JSON.parse(pending);
-          const { data: newProfile } = await supabase
-            .from("profiles")
-            .insert({
-              id: session.user.id,
-              ...parsed,
-              privacy_consent: true,
-              privacy_consent_at: new Date().toISOString(),
-            })
-            .select()
-            .single();
-          if (newProfile) {
-            setProfile(newProfile);
-            sessionStorage.removeItem("zc_pending_profile");
-          }
+          fields = JSON.parse(pending);
+        } else {
+          const meta = session.user.user_metadata || {};
+          const fullName = (meta.full_name || meta.name || "").trim();
+          const parts = fullName ? fullName.split(/\s+/) : [];
+          const first = parts.shift() || (session.user.email ? session.user.email.split("@")[0] : "there");
+          fields = {
+            first_name: first,
+            last_name: parts.join(" "),
+            profession: "",
+            tax_region: "rest_of_uk",
+          };
+        }
+        const { data: newProfile } = await supabase
+          .from("profiles")
+          .insert({
+            id: session.user.id,
+            ...fields,
+            privacy_consent: true,
+            privacy_consent_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+        if (newProfile) {
+          setProfile(newProfile);
+          sessionStorage.removeItem("zc_pending_profile");
         }
       }
       if (shiftsData && shiftsData.length === 0) {
