@@ -442,6 +442,7 @@ function MainApp({ session, onShowPrivacy, offline }) {
 
       {showOnboarding && (
         <OnboardingWelcome
+          firstName={profile?.first_name || ""}
           onAddShift={() => {
             setShowOnboarding(false);
             openAddShift();

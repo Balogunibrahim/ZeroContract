@@ -1,8 +1,23 @@
 import { useState } from "react";
+import { Mail } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
-import { COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, LogoLockup } from "../theme";
 
-const fieldLabel = {
+const SHELL_BG = "radial-gradient(120% 70% at 50% 0%,#123f30,#0d2c22 60%,#0a211a)";
+
+const STYLE = `
+  .zc-inp{width:100%;padding:11px 13px;border:1px solid ${COLORS.border};border-radius:12px;
+    background:#fff;font-family:'Inter',sans-serif;font-size:14px;color:${COLORS.ink};outline:none;
+    box-sizing:border-box;transition:border-color .15s,box-shadow .15s}
+  .zc-inp:focus{border-color:${COLORS.brand};box-shadow:0 0 0 3px rgba(10,123,87,.12)}
+  .zc-inp::placeholder{color:#B7C0BA}
+  select.zc-inp{appearance:none;-webkit-appearance:none;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235E6B63' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+  .zc-scroll::-webkit-scrollbar{display:none}
+`;
+
+const flabel = {
   fontFamily: FONTS.body,
   fontSize: 10,
   fontWeight: 600,
@@ -13,122 +28,69 @@ const fieldLabel = {
   marginBottom: 6,
 };
 
-const inp = {
-  width: "100%",
-  padding: "10px 12px",
-  boxSizing: "border-box",
-  border: `1px solid ${COLORS.border}`,
-  borderBottom: `2px solid ${COLORS.ink}`,
-  borderRadius: 2,
-  background: COLORS.card,
-  fontFamily: FONTS.body,
-  fontSize: 15,
-  color: COLORS.ink,
-  outline: "none",
-};
-
 const primaryBtn = {
   width: "100%",
-  padding: "13px 16px",
-  borderRadius: 2,
+  padding: 14,
+  borderRadius: 14,
   border: "none",
-  background: COLORS.black,
-  color: "#fff",
   cursor: "pointer",
-  fontSize: 14,
-  fontWeight: 600,
+  background: "linear-gradient(135deg,#0A7B57,#0B3D2E)",
+  color: "#fff",
   fontFamily: FONTS.body,
+  fontWeight: 600,
+  fontSize: 15,
+  boxShadow: "0 12px 24px -10px rgba(10,123,87,.55)",
+  marginTop: 8,
 };
 
-const ghostBtn = {
+const linkBtn = {
   border: "none",
   background: "none",
-  color: COLORS.ink,
+  color: COLORS.brand,
   cursor: "pointer",
-  padding: 0,
-  fontSize: 13,
   fontWeight: 600,
-  textDecoration: "underline",
   fontFamily: FONTS.body,
+  fontSize: 12.5,
+  padding: 0,
 };
-
-const card = {
-  background: COLORS.card,
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: 2,
-  padding: "1.75rem",
-};
-
-const wrap = {
-  minHeight: "100vh",
-  background: COLORS.bg,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "1.5rem",
-  fontFamily: FONTS.body,
-  textAlign: "left",
-};
-
-function extrude(steps) {
-  const l = [];
-  for (let i = 1; i <= steps; i++) {
-    const v = Math.round(205 + (i / steps) * 33);
-    l.push(`-${i}px -${i}px 0 rgb(${v},${v},${v})`);
-  }
-  return l.join(", ");
-}
-
-function AppHeader() {
-  return (
-    <div style={{ marginBottom: 24 }}>
-      <p style={{ fontFamily: FONTS.body, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: COLORS.label, margin: "0 0 6px" }}>
-        Shift &amp; earnings ledger
-      </p>
-      <h1
-        style={{
-          fontFamily: FONTS.display,
-          fontWeight: 400,
-          fontSize: "clamp(30px, 9vw, 38px)",
-          lineHeight: 1,
-          letterSpacing: "-0.01em",
-          textTransform: "uppercase",
-          color: COLORS.ink,
-          margin: 0,
-          textShadow: extrude(9),
-        }}
-      >
-        Zero Contract
-      </h1>
-      <p style={{ fontFamily: FONTS.body, fontSize: 13.5, color: COLORS.inkSoft, margin: "12px 0 0" }}>
-        Track your shifts, earnings and tax estimate.
-      </p>
-    </div>
-  );
-}
 
 function ErrorMsg({ msg }) {
   if (!msg) return null;
-  return <p style={{ fontFamily: FONTS.body, color: COLORS.danger, fontSize: 13, marginBottom: 14, lineHeight: 1.4 }}>{msg}</p>;
+  return <p style={{ fontFamily: FONTS.body, color: COLORS.danger, fontSize: 12.5, margin: "0 0 12px", lineHeight: 1.45 }}>{msg}</p>;
 }
 function InfoMsg({ msg }) {
   if (!msg) return null;
-  return <p style={{ fontFamily: FONTS.body, color: COLORS.ink, fontSize: 13, marginBottom: 14, lineHeight: 1.4 }}>{msg}</p>;
+  return <p style={{ fontFamily: FONTS.body, color: COLORS.brand, fontSize: 12.5, margin: "0 0 12px", lineHeight: 1.45, background: COLORS.tint, borderRadius: 10, padding: "9px 12px" }}>{msg}</p>;
+}
+
+// Card with the branded green header on top and a scrollable body below.
+function AuthShell({ title, subtitle, children }) {
+  return (
+    <div style={{ minHeight: "100vh", background: SHELL_BG, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px", fontFamily: FONTS.body, textAlign: "left" }}>
+      <style>{STYLE}</style>
+      <div style={{ width: "100%", maxWidth: 420, background: COLORS.bg, borderRadius: 28, overflow: "hidden", boxShadow: "0 30px 60px -22px rgba(0,0,0,.6)", display: "flex", flexDirection: "column", maxHeight: "94vh" }}>
+        <div style={{ background: "linear-gradient(150deg,#0B4835,#0B3D2E 75%,#092b21)", padding: "30px 24px 26px", color: "#fff", position: "relative", overflow: "hidden", flexShrink: 0 }}>
+          <div style={{ position: "absolute", right: -30, top: -40, width: 150, height: 150, background: "radial-gradient(circle,rgba(224,160,43,.22),transparent 70%)", borderRadius: "50%" }} />
+          <div style={{ position: "relative" }}>
+            <LogoLockup size={28} dark />
+          </div>
+          <h2 style={{ fontFamily: FONTS.display, fontSize: 23, fontWeight: 700, letterSpacing: "-0.02em", margin: "18px 0 4px", position: "relative" }}>{title}</h2>
+          <p style={{ fontSize: 12.5, color: "#BFE0D3", position: "relative", margin: 0 }}>{subtitle}</p>
+        </div>
+        <div className="zc-scroll" style={{ overflowY: "auto", padding: "20px 22px 24px" }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function AuthScreen({ onShowPrivacy }) {
   const [mode, setMode] = useState("login");
-  return (
-    <div style={wrap}>
-      <div style={{ width: "100%", maxWidth: 380 }}>
-        <AppHeader />
-        {mode === "login" && <LoginForm onSwitch={setMode} onShowPrivacy={onShowPrivacy} />}
-        {mode === "signup" && <SignupForm onSwitch={setMode} onShowPrivacy={onShowPrivacy} />}
-        {mode === "forgot" && <ForgotForm onSwitch={setMode} />}
-        {mode === "confirm" && <ConfirmScreen onSwitch={setMode} />}
-      </div>
-    </div>
-  );
+  if (mode === "signup") return <SignupForm onSwitch={setMode} onShowPrivacy={onShowPrivacy} />;
+  if (mode === "forgot") return <ForgotForm onSwitch={setMode} />;
+  if (mode === "confirm") return <ConfirmScreen onSwitch={setMode} />;
+  return <LoginForm onSwitch={setMode} onShowPrivacy={onShowPrivacy} />;
 }
 
 function LoginForm({ onSwitch, onShowPrivacy }) {
@@ -143,9 +105,10 @@ function LoginForm({ onSwitch, onShowPrivacy }) {
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      if (error.message.toLowerCase().includes("invalid login") || error.message.toLowerCase().includes("invalid credentials")) {
+      const m = error.message.toLowerCase();
+      if (m.includes("invalid login") || m.includes("invalid credentials")) {
         setError("Email or password is incorrect. Try again or reset your password below.");
-      } else if (error.message.toLowerCase().includes("email not confirmed")) {
+      } else if (m.includes("email not confirmed")) {
         setError("You haven't confirmed your email yet. Check your inbox for a confirmation link.");
       } else {
         setError(error.message);
@@ -155,29 +118,31 @@ function LoginForm({ onSwitch, onShowPrivacy }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={card}>
-      <div style={{ marginBottom: 14 }}>
-        <label style={fieldLabel}>Email</label>
-        <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} style={inp} placeholder="you@example.com" />
-      </div>
-      <div style={{ marginBottom: 6 }}>
-        <label style={fieldLabel}>Password</label>
-        <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} style={inp} />
-      </div>
-      <div style={{ textAlign: "right", marginBottom: 18 }}>
-        <button type="button" onClick={() => onSwitch("forgot")} style={{ ...ghostBtn, fontSize: 12, fontWeight: 400, color: COLORS.inkSoft }}>
-          Forgot password?
-        </button>
-      </div>
-      <ErrorMsg msg={error} />
-      <button type="submit" disabled={busy} style={primaryBtn}>{busy ? "Logging in..." : "Log in"}</button>
-      <p style={{ fontFamily: FONTS.body, fontSize: 13, color: COLORS.inkSoft, marginTop: 16, textAlign: "center" }}>
-        New here? <button type="button" onClick={() => onSwitch("signup")} style={ghostBtn}>Create an account</button>
-      </p>
-      <p style={{ fontSize: 12, marginTop: 10, textAlign: "center" }}>
-        <button type="button" onClick={onShowPrivacy} style={{ ...ghostBtn, fontSize: 12, fontWeight: 400, color: COLORS.label }}>Privacy Policy</button>
-      </p>
-    </form>
+    <AuthShell title="Welcome back" subtitle="Log in to see your earnings">
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: 13 }}>
+          <label style={flabel}>Email</label>
+          <input className="zc-inp" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+        </div>
+        <div style={{ marginBottom: 6 }}>
+          <label style={flabel}>Password</label>
+          <input className="zc-inp" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        </div>
+        <div style={{ textAlign: "right", marginBottom: 14 }}>
+          <button type="button" onClick={() => onSwitch("forgot")} style={{ ...linkBtn, color: COLORS.inkSoft, fontWeight: 400, fontSize: 12 }}>
+            Forgot password?
+          </button>
+        </div>
+        <ErrorMsg msg={error} />
+        <button type="submit" disabled={busy} style={{ ...primaryBtn, opacity: busy ? 0.7 : 1 }}>{busy ? "Logging in…" : "Log in"}</button>
+        <p style={{ textAlign: "center", fontSize: 12.5, color: COLORS.inkSoft, marginTop: 16 }}>
+          New here? <button type="button" onClick={() => onSwitch("signup")} style={linkBtn}>Create an account</button>
+        </p>
+        <p style={{ textAlign: "center", fontSize: 12, marginTop: 10 }}>
+          <button type="button" onClick={onShowPrivacy} style={{ ...linkBtn, fontWeight: 400, color: COLORS.label, fontSize: 12 }}>Privacy Policy</button>
+        </p>
+      </form>
+    </AuthShell>
   );
 }
 
@@ -206,7 +171,8 @@ function SignupForm({ onSwitch, onShowPrivacy }) {
     setBusy(true);
     const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
     if (signUpError) {
-      if (signUpError.message.toLowerCase().includes("already registered") || signUpError.message.toLowerCase().includes("already exists")) {
+      const m = signUpError.message.toLowerCase();
+      if (m.includes("already registered") || m.includes("already exists")) {
         setError("An account with that email already exists. Try logging in instead.");
       } else {
         setError(signUpError.message);
@@ -238,82 +204,59 @@ function SignupForm({ onSwitch, onShowPrivacy }) {
     setBusy(false);
   };
 
-  const selectStyle = { ...inp, appearance: "none", cursor: "pointer" };
-
   return (
-    <form onSubmit={handleSubmit} style={{ ...card, maxHeight: "85vh", overflowY: "auto" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-        <div>
-          <label style={fieldLabel}>First name</label>
-          <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} style={inp} />
+    <AuthShell title="Create account" subtitle="Start tracking in two minutes">
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: "flex", gap: 10, marginBottom: 13 }}>
+          <div style={{ flex: 1 }}>
+            <label style={flabel}>First name</label>
+            <input className="zc-inp" type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={flabel}>Last name</label>
+            <input className="zc-inp" type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
+          </div>
         </div>
-        <div>
-          <label style={fieldLabel}>Last name</label>
-          <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} style={inp} />
+        <div style={{ marginBottom: 13 }}>
+          <label style={flabel}>Profession</label>
+          <input className="zc-inp" type="text" required placeholder="e.g. Security, Bar staff, Driver" value={profession} onChange={(e) => setProfession(e.target.value)} />
         </div>
-      </div>
-      <div style={{ marginBottom: 14 }}>
-        <label style={fieldLabel}>Profession</label>
-        <input type="text" required placeholder="e.g. Security, Bar staff, Driver" value={profession} onChange={(e) => setProfession(e.target.value)} style={inp} />
-      </div>
-      <div style={{ marginBottom: 14 }}>
-        <label style={fieldLabel}>Tax region</label>
-        <select value={taxRegion} onChange={(e) => setTaxRegion(e.target.value)} style={selectStyle}>
-          <option value="rest_of_uk">England, Wales or Northern Ireland</option>
-          <option value="scotland">Scotland</option>
-          <option value="skip">I'll set this later</option>
-        </select>
-      </div>
-      <div style={{ marginBottom: 14 }}>
-        <label style={fieldLabel}>Email</label>
-        <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} style={inp} placeholder="you@example.com" />
-      </div>
-      <div style={{ marginBottom: 14 }}>
-        <label style={fieldLabel}>Password (min. 8 characters)</label>
-        <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} style={inp} />
-      </div>
-      <div style={{ marginBottom: 18 }}>
-        <label style={fieldLabel}>Confirm password</label>
-        <input type="password" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} style={inp} />
-      </div>
-      <div style={{ marginBottom: 18 }}>
-        <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontFamily: FONTS.body, fontSize: 12.5, color: COLORS.inkSoft, lineHeight: 1.4, cursor: "pointer" }}>
-          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 2 }} />
+        <div style={{ marginBottom: 13 }}>
+          <label style={flabel}>Email</label>
+          <input className="zc-inp" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+        </div>
+        <div style={{ marginBottom: 13 }}>
+          <label style={flabel}>Tax region</label>
+          <select className="zc-inp" value={taxRegion} onChange={(e) => setTaxRegion(e.target.value)}>
+            <option value="rest_of_uk">England, Wales &amp; NI</option>
+            <option value="scotland">Scotland</option>
+            <option value="skip">Rather not say</option>
+          </select>
+        </div>
+        <div style={{ display: "flex", gap: 10, marginBottom: 13 }}>
+          <div style={{ flex: 1 }}>
+            <label style={flabel}>Password</label>
+            <input className="zc-inp" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={flabel}>Confirm</label>
+            <input className="zc-inp" type="password" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+          </div>
+        </div>
+        <label style={{ display: "flex", gap: 9, alignItems: "flex-start", margin: "4px 0 8px", fontSize: 12, color: COLORS.inkSoft, lineHeight: 1.5, cursor: "pointer" }}>
+          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 2, accentColor: COLORS.brand }} />
           <span>
             I've read and accept the{" "}
-            <button type="button" onClick={onShowPrivacy} style={{ ...ghostBtn, fontSize: 12.5 }}>Privacy Policy</button>
-            , and understand how my data is used.
+            <button type="button" onClick={onShowPrivacy} style={linkBtn}>Privacy Policy</button>.
           </span>
         </label>
-      </div>
-      <ErrorMsg msg={error} />
-      <button type="submit" disabled={busy} style={primaryBtn}>{busy ? "Creating account..." : "Create account"}</button>
-      <p style={{ fontFamily: FONTS.body, fontSize: 13, color: COLORS.inkSoft, marginTop: 16, textAlign: "center" }}>
-        Already have an account? <button type="button" onClick={() => onSwitch("login")} style={ghostBtn}>Log in</button>
-      </p>
-    </form>
-  );
-}
-
-function ConfirmScreen({ onSwitch }) {
-  return (
-    <div style={card}>
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ width: 48, height: 48, borderRadius: "50%", background: COLORS.black, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-          <span style={{ color: "#fff", fontSize: 22 }}>&#10003;</span>
-        </div>
-        <h2 style={{ fontFamily: FONTS.body, fontSize: 20, fontWeight: 700, color: COLORS.ink, margin: "0 0 8px" }}>Check your email</h2>
-        <p style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.inkSoft, lineHeight: 1.6, margin: 0 }}>
-          We've sent a confirmation link to your inbox. Click it to activate your account, then come back here to log in.
+        <ErrorMsg msg={error} />
+        <button type="submit" disabled={busy} style={{ ...primaryBtn, opacity: busy ? 0.7 : 1 }}>{busy ? "Creating account…" : "Create account"}</button>
+        <p style={{ textAlign: "center", fontSize: 12.5, color: COLORS.inkSoft, marginTop: 16 }}>
+          Already have an account? <button type="button" onClick={() => onSwitch("login")} style={linkBtn}>Log in</button>
         </p>
-      </div>
-      <div style={{ background: COLORS.bg, border: `1px solid ${COLORS.border}`, borderRadius: 2, padding: "12px 14px", marginBottom: 20 }}>
-        <p style={{ fontFamily: FONTS.body, fontSize: 13, color: COLORS.inkSoft, margin: 0, lineHeight: 1.5 }}>
-          Can't find it? Check your spam or junk folder. The email comes from noreply@mail.app.supabase.io.
-        </p>
-      </div>
-      <button onClick={() => onSwitch("login")} style={primaryBtn}>Back to log in</button>
-    </div>
+      </form>
+    </AuthShell>
   );
 }
 
@@ -336,21 +279,44 @@ function ForgotForm({ onSwitch }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={card}>
-      <h2 style={{ fontFamily: FONTS.body, fontSize: 18, fontWeight: 700, color: COLORS.ink, margin: "0 0 8px" }}>Reset your password</h2>
-      <p style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.inkSoft, marginBottom: 18, lineHeight: 1.5 }}>
-        Enter your email and we'll send a reset link if an account exists.
-      </p>
-      <div style={{ marginBottom: 18 }}>
-        <label style={fieldLabel}>Email</label>
-        <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} style={inp} placeholder="you@example.com" />
+    <AuthShell title="Reset password" subtitle="We'll email you a secure link">
+      <form onSubmit={handleSubmit}>
+        <p style={{ fontSize: 13, color: COLORS.inkSoft, lineHeight: 1.6, marginBottom: 16 }}>
+          Enter the email you signed up with and we'll send a link to set a new password.
+        </p>
+        <div style={{ marginBottom: 16 }}>
+          <label style={flabel}>Email</label>
+          <input className="zc-inp" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+        </div>
+        <ErrorMsg msg={error} />
+        <InfoMsg msg={info} />
+        <button type="submit" disabled={busy} style={{ ...primaryBtn, opacity: busy ? 0.7 : 1 }}>{busy ? "Sending…" : "Send reset link"}</button>
+        <p style={{ textAlign: "center", fontSize: 12.5, color: COLORS.inkSoft, marginTop: 16 }}>
+          <button type="button" onClick={() => onSwitch("login")} style={linkBtn}>← Back to log in</button>
+        </p>
+      </form>
+    </AuthShell>
+  );
+}
+
+function ConfirmScreen({ onSwitch }) {
+  return (
+    <div style={{ minHeight: "100vh", background: SHELL_BG, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px", fontFamily: FONTS.body }}>
+      <div style={{ width: "100%", maxWidth: 420, background: COLORS.bg, borderRadius: 28, overflow: "hidden", boxShadow: "0 30px 60px -22px rgba(0,0,0,.6)" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "44px 30px" }}>
+          <div style={{ width: 76, height: 76, borderRadius: 24, background: COLORS.tint, display: "grid", placeItems: "center", color: COLORS.brand, marginBottom: 22 }}>
+            <Mail size={36} strokeWidth={1.8} />
+          </div>
+          <h2 style={{ fontFamily: FONTS.display, fontSize: 21, fontWeight: 700, color: COLORS.ink, margin: "0 0 10px" }}>Check your email</h2>
+          <p style={{ fontSize: 13.5, color: COLORS.inkSoft, lineHeight: 1.6, margin: 0 }}>
+            We've sent a confirmation link to your inbox. Tap it to activate your account, then come back and log in.
+          </p>
+          <p style={{ fontSize: 12, color: COLORS.label, marginTop: 14, marginBottom: 24 }}>
+            Can't find it? Check your spam or junk folder.
+          </p>
+          <button onClick={() => onSwitch("login")} style={{ ...primaryBtn, maxWidth: 220, marginTop: 0 }}>Back to log in</button>
+        </div>
       </div>
-      <ErrorMsg msg={error} />
-      <InfoMsg msg={info} />
-      <button type="submit" disabled={busy} style={primaryBtn}>{busy ? "Sending..." : "Send reset link"}</button>
-      <p style={{ fontFamily: FONTS.body, fontSize: 13, color: COLORS.inkSoft, marginTop: 16, textAlign: "center" }}>
-        <button type="button" onClick={() => onSwitch("login")} style={ghostBtn}>Back to log in</button>
-      </p>
-    </form>
+    </div>
   );
 }
