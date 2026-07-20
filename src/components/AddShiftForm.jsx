@@ -252,18 +252,18 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
           {/* Date */}
           <div style={{ marginBottom: 16 }}>
             <label style={flabel}>Date</label>
-            <input className="asf-inp" type="date" value={form.date} onChange={(e) => set({ date: e.target.value })} />
+            <input aria-label="Shift date" className="asf-inp" type="date" value={form.date} onChange={(e) => set({ date: e.target.value })} />
           </div>
 
           {/* Start / End */}
           <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
             <div style={{ flex: 1 }}>
               <label style={flabel}>Start</label>
-              <input className="asf-inp" type="time" value={form.start} onChange={(e) => set({ start: e.target.value })} />
+              <input aria-label="Start time" className="asf-inp" type="time" value={form.start} onChange={(e) => set({ start: e.target.value })} />
             </div>
             <div style={{ flex: 1 }}>
               <label style={flabel}>End</label>
-              <input className="asf-inp" type="time" value={form.end} onChange={(e) => set({ end: e.target.value })} />
+              <input aria-label="End time" className="asf-inp" type="time" value={form.end} onChange={(e) => set({ end: e.target.value })} />
             </div>
           </div>
 
@@ -272,6 +272,7 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
             <label style={flabel}>Employer</label>
             {!addingEmp ? (
               <select
+                aria-label="Employer"
                 className="asf-inp"
                 value={form.employer && !employers.some((e) => e.name === form.employer) ? "__custom" : form.employer}
                 onChange={(e) => {
@@ -296,6 +297,7 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
             ) : (
               <div style={{ background: "#fff", border: `1px solid ${COLORS.border}`, borderRadius: 13, padding: 12 }}>
                 <input
+                  aria-label="New employer name"
                   className="asf-inp"
                   type="text"
                   placeholder="Employer name"
@@ -305,6 +307,7 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
                   autoFocus
                 />
                 <input
+                  aria-label="New employer hourly rate"
                   className="asf-inp"
                   type="number"
                   step="0.25"
@@ -338,7 +341,7 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
           {/* Rate */}
           <div style={{ marginBottom: 16 }}>
             <label style={flabel}>Hourly rate (£){form.employer ? " · from employer, editable" : ""}</label>
-            <input className="asf-inp" type="number" step="0.25" inputMode="decimal" placeholder="12.50" value={form.rate} onChange={(e) => set({ rate: e.target.value })} />
+            <input aria-label="Hourly rate in pounds" className="asf-inp" type="number" step="0.25" inputMode="decimal" placeholder="12.50" value={form.rate} onChange={(e) => set({ rate: e.target.value })} />
           </div>
 
           {/* Workplace address + estimate */}
@@ -347,6 +350,7 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
             <div style={{ display: "flex", gap: 8 }}>
               <input
                 ref={workAddressRef}
+                aria-label="Workplace address"
                 className="asf-inp"
                 type="text"
                 placeholder="Where is the shift?"
@@ -421,13 +425,13 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
           {/* Travel cost */}
           <div style={{ marginBottom: 16 }}>
             <label style={flabel}>Travel cost, round trip (£)</label>
-            <input className="asf-inp" type="number" step="0.50" inputMode="decimal" placeholder="0.00" value={form.travelCost} onChange={(e) => set({ travelCost: e.target.value })} />
+            <input aria-label="Travel cost, round trip, in pounds" className="asf-inp" type="number" step="0.50" inputMode="decimal" placeholder="0.00" value={form.travelCost} onChange={(e) => set({ travelCost: e.target.value })} />
           </div>
 
           {/* Payday */}
           <div style={{ marginBottom: 16 }}>
             <label style={flabel}>Payday</label>
-            <input className="asf-inp" type="date" value={form.payday} onChange={(e) => set({ payday: e.target.value })} />
+            <input aria-label="Payday date" className="asf-inp" type="date" value={form.payday} onChange={(e) => set({ payday: e.target.value })} />
           </div>
 
           {/* Already paid toggle */}
@@ -477,6 +481,7 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
           <div style={{ marginBottom: 16 }}>
             <label style={flabel}>Notes</label>
             <textarea
+              aria-label="Notes"
               className="asf-inp"
               placeholder="Anything to remember about this shift"
               value={form.notes}

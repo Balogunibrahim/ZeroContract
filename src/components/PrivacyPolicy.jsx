@@ -16,12 +16,12 @@ export default function PrivacyPolicy({ onClose }) {
         textAlign: "left",
       }}
     >
-      <div style={{ background: COLORS.bg, borderRadius: 2, maxWidth: 580, width: "100%", padding: "2rem 1.75rem", position: "relative" }}>
+      <div style={{ background: COLORS.bg, borderRadius: 24, maxWidth: 580, width: "100%", padding: "2rem 1.75rem", position: "relative", boxShadow: "0 30px 60px -22px rgba(0,0,0,.5)" }}>
         <div style={{ borderBottom: `1px solid ${COLORS.line}`, paddingBottom: 16, marginBottom: 24 }}>
-          <p style={{ fontFamily: FONTS.body, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: COLORS.label, margin: "0 0 6px" }}>
+          <p style={{ fontFamily: FONTS.body, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: COLORS.brand, margin: "0 0 6px" }}>
             Zero Contract
           </p>
-          <h1 style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: 30, textTransform: "uppercase", letterSpacing: "-0.01em", color: COLORS.ink, margin: 0 }}>
+          <h1 style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 28, letterSpacing: "-0.02em", color: COLORS.ink, margin: 0 }}>
             Privacy Policy
           </h1>
           <p style={{ fontFamily: FONTS.body, color: COLORS.inkSoft, fontSize: 13, margin: "10px 0 0" }}>Last updated: July 2026</p>
@@ -92,7 +92,7 @@ export default function PrivacyPolicy({ onClose }) {
         <div style={{ marginTop: 28, paddingTop: 20, borderTop: `1px solid ${COLORS.line}` }}>
           <button
             onClick={onClose}
-            style={{ padding: "13px 20px", borderRadius: 2, border: "none", background: COLORS.black, color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600, fontFamily: FONTS.body, width: "100%" }}
+            style={{ padding: 14, borderRadius: 14, border: "none", background: "linear-gradient(135deg,#0A7B57,#0B3D2E)", color: "#fff", cursor: "pointer", fontSize: 15, fontWeight: 600, fontFamily: FONTS.body, width: "100%", boxShadow: "0 12px 24px -10px rgba(10,123,87,.5)" }}
           >
             Close
           </button>

@@ -74,6 +74,33 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Visible keyboard focus for accessibility — only shows for keyboard
+   users, never on mouse/touch. */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 ::selection {
   background: rgba(10, 123, 87, 0.2);
+}
+
+/* Branded loading spinner */
+@keyframes zc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.zc-spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid var(--bg);
+  border-color: #dbe5df;
+  border-top-color: var(--brand);
+  animation: zc-spin 0.8s linear infinite;
 }

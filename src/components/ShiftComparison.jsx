@@ -16,14 +16,13 @@ const fieldLabelStyle = {
 
 const inputStyle = {
   width: "100%",
-  padding: "4px 0",
+  padding: "10px 12px",
   boxSizing: "border-box",
-  border: "none",
-  borderBottom: `1px solid ${COLORS.ink}`,
-  borderRadius: 0,
-  background: "transparent",
+  border: `1px solid ${COLORS.border}`,
+  borderRadius: 12,
+  background: "#fff",
   fontFamily: FONTS.body,
-  fontSize: 17,
+  fontSize: 15,
   fontWeight: 600,
   color: COLORS.ink,
   outline: "none",
@@ -77,12 +76,12 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
 
   return (
     <div style={overlayStyle}>
-      <div style={{ background: COLORS.bg, borderRadius: 2, maxWidth: 560, width: "100%", padding: "1.75rem" }}>
+      <div style={{ background: COLORS.bg, borderRadius: 24, maxWidth: 560, width: "100%", padding: "1.75rem", boxShadow: "0 30px 60px -22px rgba(0,0,0,.5)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <p style={{ fontFamily: FONTS.body, fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: COLORS.ink, margin: 0 }}>
+          <p style={{ fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: COLORS.ink, margin: 0 }}>
             Compare shifts
           </p>
-          <button onClick={onClose} style={iconBtn}><X size={18} color={COLORS.inkSoft} /></button>
+          <button onClick={onClose} aria-label="Close" style={{ ...iconBtn, width: 34, height: 34, borderRadius: 11, border: `1px solid ${COLORS.border}`, background: "#fff", alignItems: "center", justifyContent: "center" }}><X size={16} color={COLORS.inkSoft} /></button>
         </div>
         <p style={{ fontFamily: FONTS.body, fontSize: 13.5, color: COLORS.inkSoft, margin: "0 0 22px", lineHeight: 1.5 }}>
           Enter two or more offers. We'll show which one actually pays more per hour after tax and travel.
@@ -97,14 +96,15 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
               style={{
                 position: "relative",
                 background: COLORS.card,
-                border: `${isBest ? 1.5 : 1}px solid ${isBest ? COLORS.ink : COLORS.border}`,
-                borderRadius: 2,
+                border: `${isBest ? 1.5 : 1}px solid ${isBest ? COLORS.brand : COLORS.border}`,
+                borderRadius: 18,
                 padding: "18px 18px 16px",
                 marginBottom: 14,
+                boxShadow: "0 1px 2px rgba(11,61,46,.05)",
               }}
             >
               {isBest && (
-                <span style={{ position: "absolute", top: -1, right: -1, background: COLORS.black, color: "#fff", fontFamily: FONTS.body, fontSize: 9.5, fontWeight: 700, letterSpacing: 1, padding: "5px 9px" }}>
+                <span style={{ position: "absolute", top: -10, right: 14, background: COLORS.brand, color: "#fff", fontFamily: FONTS.body, fontSize: 9.5, fontWeight: 700, letterSpacing: 1, padding: "5px 10px", borderRadius: 20 }}>
                   BEST VALUE
                 </span>
               )}
@@ -112,17 +112,17 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 14, marginBottom: 16, borderBottom: `1px solid ${COLORS.line}` }}>
                 <span style={{ fontFamily: FONTS.body, fontSize: 18, fontWeight: 700, color: COLORS.ink }}>Shift {i + 1}</span>
                 {candidates.length > 1 && (
-                  <button onClick={() => removeCandidate(c.id)} aria-label="Remove shift" style={{ ...iconBtn, marginRight: isBest ? 70 : 0 }}>
+                  <button onClick={() => removeCandidate(c.id)} aria-label="Remove shift" style={{ ...iconBtn, padding: 8, margin: -8 }}>
                     <Trash2 size={15} color={COLORS.label} />
                   </button>
                 )}
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 20px", marginBottom: 16 }}>
-                <Field label="Start"><input type="time" value={c.start} onChange={(e) => updateCandidate(c.id, "start", e.target.value)} style={inputStyle} /></Field>
-                <Field label="End"><input type="time" value={c.end} onChange={(e) => updateCandidate(c.id, "end", e.target.value)} style={inputStyle} /></Field>
-                <Field label="Rate £/hr"><input type="number" step="0.01" placeholder="12.50" value={c.rate} onChange={(e) => updateCandidate(c.id, "rate", e.target.value)} style={inputStyle} /></Field>
-                <Field label="Travel £"><input type="number" step="0.01" placeholder="0" value={c.travelCost} onChange={(e) => updateCandidate(c.id, "travelCost", e.target.value)} style={inputStyle} /></Field>
+                <Field label="Start"><input aria-label={`Shift ${i + 1} start time`} type="time" value={c.start} onChange={(e) => updateCandidate(c.id, "start", e.target.value)} style={inputStyle} /></Field>
+                <Field label="End"><input aria-label={`Shift ${i + 1} end time`} type="time" value={c.end} onChange={(e) => updateCandidate(c.id, "end", e.target.value)} style={inputStyle} /></Field>
+                <Field label="Rate £/hr"><input aria-label={`Shift ${i + 1} hourly rate`} type="number" step="0.01" placeholder="12.50" value={c.rate} onChange={(e) => updateCandidate(c.id, "rate", e.target.value)} style={inputStyle} /></Field>
+                <Field label="Travel £"><input aria-label={`Shift ${i + 1} travel cost`} type="number" step="0.01" placeholder="0" value={c.travelCost} onChange={(e) => updateCandidate(c.id, "travelCost", e.target.value)} style={inputStyle} /></Field>
               </div>
 
               {r && r.hours > 0 && r.rate > 0 && (
@@ -144,8 +144,8 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
         </button>
 
         {best && second && (
-          <div style={{ background: COLORS.black, borderRadius: 2, padding: "16px 18px", marginTop: 20 }}>
-            <p style={{ fontFamily: FONTS.body, fontSize: 10, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: "rgba(255,255,255,0.55)", margin: "0 0 8px" }}>
+          <div style={{ background: "linear-gradient(150deg,#0B4835,#0B3D2E 75%,#092b21)", borderRadius: 18, padding: "16px 18px", marginTop: 20 }}>
+            <p style={{ fontFamily: FONTS.body, fontSize: 10, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: "#9FD0BE", margin: "0 0 8px" }}>
               Verdict
             </p>
             <p style={{ fontFamily: FONTS.body, fontSize: 14.5, color: "#fff", margin: 0, lineHeight: 1.5 }}>
@@ -183,13 +183,14 @@ const addBtn = {
   alignItems: "center",
   justifyContent: "center",
   gap: 7,
-  padding: "16px",
-  background: "none",
-  border: `1px dashed ${COLORS.inkSoft}`,
-  borderRadius: 2,
-  color: COLORS.inkSoft,
+  padding: "15px",
+  background: COLORS.tint,
+  border: `1px solid ${COLORS.border}`,
+  borderRadius: 14,
+  color: COLORS.brand,
   fontFamily: FONTS.body,
   fontSize: 13,
+  fontWeight: 600,
   cursor: "pointer",
 };
 

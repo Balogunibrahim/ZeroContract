@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, LogoLockup } from "../theme";
 
-const fieldLabel = {
+const SHELL_BG = "radial-gradient(120% 70% at 50% 0%,#123f30,#0d2c22 60%,#0a211a)";
+
+const flabel = {
   fontFamily: FONTS.body,
   fontSize: 10,
   fontWeight: 600,
@@ -15,26 +17,31 @@ const fieldLabel = {
 
 const inp = {
   width: "100%",
-  padding: "10px 12px",
+  padding: "11px 13px",
   boxSizing: "border-box",
   border: `1px solid ${COLORS.border}`,
-  borderBottom: `2px solid ${COLORS.ink}`,
-  borderRadius: 2,
-  background: COLORS.card,
+  borderRadius: 12,
+  background: "#fff",
   fontFamily: FONTS.body,
-  fontSize: 15,
+  fontSize: 14,
   color: COLORS.ink,
   outline: "none",
 };
 
-function extrude(steps) {
-  const l = [];
-  for (let i = 1; i <= steps; i++) {
-    const v = Math.round(205 + (i / steps) * 33);
-    l.push(`-${i}px -${i}px 0 rgb(${v},${v},${v})`);
-  }
-  return l.join(", ");
-}
+const primaryBtn = {
+  width: "100%",
+  padding: 14,
+  borderRadius: 14,
+  border: "none",
+  cursor: "pointer",
+  background: "linear-gradient(135deg,#0A7B57,#0B3D2E)",
+  color: "#fff",
+  fontFamily: FONTS.body,
+  fontWeight: 600,
+  fontSize: 15,
+  boxShadow: "0 12px 24px -10px rgba(10,123,87,.55)",
+  marginTop: 8,
+};
 
 export default function ResetPassword({ onDone }) {
   const [password, setPassword] = useState("");
@@ -47,47 +54,42 @@ export default function ResetPassword({ onDone }) {
     e.preventDefault();
     setError("");
     if (password !== confirm) { setError("Passwords don't match."); return; }
-    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {
       setError(error.message);
       setBusy(false);
     } else {
-      setInfo("Password updated. Taking you to your ledger...");
-      setTimeout(() => onDone(), 2000);
+      setInfo("Password updated — taking you to your ledger…");
+      setTimeout(() => onDone(), 1800);
     }
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", fontFamily: FONTS.body, textAlign: "left" }}>
-      <div style={{ width: "100%", maxWidth: 380 }}>
-        <div style={{ marginBottom: 24 }}>
-          <p style={{ fontFamily: FONTS.body, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: COLORS.label, margin: "0 0 6px" }}>
-            Shift &amp; earnings ledger
-          </p>
-          <h1 style={{ fontFamily: FONTS.display, fontWeight: 400, fontSize: "clamp(30px, 9vw, 38px)", lineHeight: 1, letterSpacing: "-0.01em", textTransform: "uppercase", color: COLORS.ink, margin: 0, textShadow: extrude(9) }}>
-            Zero Contract
-          </h1>
+    <div style={{ minHeight: "100vh", background: SHELL_BG, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px", fontFamily: FONTS.body, textAlign: "left" }}>
+      <div style={{ width: "100%", maxWidth: 420, background: COLORS.bg, borderRadius: 28, overflow: "hidden", boxShadow: "0 30px 60px -22px rgba(0,0,0,.6)" }}>
+        <div style={{ background: "linear-gradient(150deg,#0B4835,#0B3D2E 75%,#092b21)", padding: "30px 24px 26px", color: "#fff", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", right: -30, top: -40, width: 150, height: 150, background: "radial-gradient(circle,rgba(224,160,43,.22),transparent 70%)", borderRadius: "50%" }} />
+          <div style={{ position: "relative" }}>
+            <LogoLockup size={28} dark />
+          </div>
+          <h2 style={{ fontFamily: FONTS.display, fontSize: 23, fontWeight: 700, letterSpacing: "-0.02em", margin: "18px 0 4px", position: "relative" }}>Set a new password</h2>
+          <p style={{ fontSize: 12.5, color: "#BFE0D3", position: "relative", margin: 0 }}>Almost done — choose a new password</p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 2, padding: "1.75rem" }}>
-          <p style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.inkSoft, marginBottom: 20, lineHeight: 1.5 }}>
-            Choose a new password for your account.
-          </p>
-          <div style={{ marginBottom: 14 }}>
-            <label style={fieldLabel}>New password</label>
-            <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} style={inp} />
+        <form onSubmit={handleSubmit} style={{ padding: "20px 22px 24px" }}>
+          <div style={{ marginBottom: 13 }}>
+            <label style={flabel}>New password</label>
+            <input aria-label="New password" className="zc-inp" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} style={inp} placeholder="At least 8 characters" />
           </div>
-          <div style={{ marginBottom: 18 }}>
-            <label style={fieldLabel}>Confirm new password</label>
-            <input type="password" required minLength={6} value={confirm} onChange={(e) => setConfirm(e.target.value)} style={inp} />
+          <div style={{ marginBottom: 16 }}>
+            <label style={flabel}>Confirm new password</label>
+            <input aria-label="Confirm new password" className="zc-inp" type="password" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} style={inp} />
           </div>
-          {error && <p style={{ fontFamily: FONTS.body, color: COLORS.danger, fontSize: 13, marginBottom: 14 }}>{error}</p>}
-          {info && <p style={{ fontFamily: FONTS.body, color: COLORS.ink, fontSize: 13, marginBottom: 14 }}>{info}</p>}
-          <button type="submit" disabled={busy} style={{ width: "100%", padding: "13px 16px", borderRadius: 2, border: "none", background: COLORS.black, color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600, fontFamily: FONTS.body }}>
-            {busy ? "Updating..." : "Set new password"}
-          </button>
+          {error && <p style={{ fontFamily: FONTS.body, color: COLORS.danger, fontSize: 12.5, margin: "0 0 12px", lineHeight: 1.45 }}>{error}</p>}
+          {info && <p style={{ fontFamily: FONTS.body, color: COLORS.brand, fontSize: 12.5, margin: "0 0 12px", lineHeight: 1.45, background: COLORS.tint, borderRadius: 10, padding: "9px 12px" }}>{info}</p>}
+          <button type="submit" disabled={busy} style={{ ...primaryBtn, opacity: busy ? 0.7 : 1 }}>{busy ? "Updating…" : "Set new password"}</button>
         </form>
       </div>
     </div>

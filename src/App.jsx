@@ -34,8 +34,9 @@ function calcHours(start, end) {
 
 function Spinner() {
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ color: COLORS.offwhite, fontFamily: FONT_MONO, fontSize: 13, letterSpacing: 1, opacity: 0.7 }}>LOADING...</p>
+    <div style={{ minHeight: "100vh", background: COLORS.paper, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }} role="status" aria-label="Loading">
+      <div className="zc-spinner" />
+      <p style={{ color: COLORS.offwhite, fontFamily: FONT_MONO, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", opacity: 0.7, margin: 0 }}>Loading your ledger</p>
     </div>
   );
 }

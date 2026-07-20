@@ -204,11 +204,11 @@ function LoginForm({ onSwitch, onShowPrivacy, email, setEmail, onNoAccount }) {
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 13 }}>
           <label style={flabel}>Email</label>
-          <input className="zc-inp" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+          <input aria-label="Email" className="zc-inp" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         </div>
         <div style={{ marginBottom: 6 }}>
           <label style={flabel}>Password</label>
-          <input className="zc-inp" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input aria-label="Password" className="zc-inp" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <div style={{ textAlign: "right", marginBottom: 14 }}>
           <button type="button" onClick={() => onSwitch("forgot")} style={{ ...linkBtn, color: COLORS.inkSoft, fontWeight: 400, fontSize: 12 }}>
@@ -298,24 +298,24 @@ function SignupForm({ onSwitch, onShowPrivacy, email, setEmail, notice }) {
         <div style={{ display: "flex", gap: 10, marginBottom: 13 }}>
           <div style={{ flex: 1 }}>
             <label style={flabel}>First name</label>
-            <input className="zc-inp" type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            <input aria-label="First name" className="zc-inp" type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} />
           </div>
           <div style={{ flex: 1 }}>
             <label style={flabel}>Last name</label>
-            <input className="zc-inp" type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
+            <input aria-label="Last name" className="zc-inp" type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
           </div>
         </div>
         <div style={{ marginBottom: 13 }}>
           <label style={flabel}>Profession</label>
-          <input className="zc-inp" type="text" required placeholder="e.g. Security, Bar staff, Driver" value={profession} onChange={(e) => setProfession(e.target.value)} />
+          <input aria-label="Profession" className="zc-inp" type="text" required placeholder="e.g. Security, Bar staff, Driver" value={profession} onChange={(e) => setProfession(e.target.value)} />
         </div>
         <div style={{ marginBottom: 13 }}>
           <label style={flabel}>Email</label>
-          <input className="zc-inp" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+          <input aria-label="Email" className="zc-inp" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         </div>
         <div style={{ marginBottom: 13 }}>
           <label style={flabel}>Tax region</label>
-          <select className="zc-inp" value={taxRegion} onChange={(e) => setTaxRegion(e.target.value)}>
+          <select aria-label="Tax region" className="zc-inp" value={taxRegion} onChange={(e) => setTaxRegion(e.target.value)}>
             <option value="rest_of_uk">England, Wales &amp; NI</option>
             <option value="scotland">Scotland</option>
             <option value="skip">Rather not say</option>
@@ -324,11 +324,11 @@ function SignupForm({ onSwitch, onShowPrivacy, email, setEmail, notice }) {
         <div style={{ display: "flex", gap: 10, marginBottom: 13 }}>
           <div style={{ flex: 1 }}>
             <label style={flabel}>Password</label>
-            <input className="zc-inp" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input aria-label="Password" className="zc-inp" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
           <div style={{ flex: 1 }}>
             <label style={flabel}>Confirm</label>
-            <input className="zc-inp" type="password" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+            <input aria-label="Confirm password" className="zc-inp" type="password" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
           </div>
         </div>
         <label style={{ display: "flex", gap: 9, alignItems: "flex-start", margin: "4px 0 8px", fontSize: 12, color: COLORS.inkSoft, lineHeight: 1.5, cursor: "pointer" }}>
@@ -378,7 +378,7 @@ function ForgotForm({ onSwitch, email, setEmail }) {
         </p>
         <div style={{ marginBottom: 16 }}>
           <label style={flabel}>Email</label>
-          <input className="zc-inp" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+          <input aria-label="Email" className="zc-inp" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         </div>
         <ErrorMsg msg={error} />
         <InfoMsg msg={info} />

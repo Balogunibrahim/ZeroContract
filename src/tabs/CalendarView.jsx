@@ -354,7 +354,7 @@ export default function CalendarView({ shifts, onEdit, onDelete }) {
             <button
               onClick={() => onDelete(s.id)}
               aria-label="Delete shift"
-              style={{ border: "none", background: "none", padding: 0, color: COLORS.label, cursor: "pointer", display: "flex", marginTop: 2 }}
+              style={{ border: "none", background: "none", padding: 8, margin: "-6px -8px 0 0", color: COLORS.label, cursor: "pointer", display: "flex" }}
             >
               <Trash2 size={15} />
             </button>

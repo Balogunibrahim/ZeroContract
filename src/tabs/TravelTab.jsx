@@ -128,8 +128,8 @@ export default function TravelTab({ shiftsWithTravel, totalTravelCost }) {
         })
       )}
 
-      <p style={{ fontFamily: FONTS.body, fontSize: 12, color: COLORS.label, marginTop: 18 }}>
-        Automatic distance lookup coming soon.
+      <p style={{ fontFamily: FONTS.body, fontSize: 12, color: COLORS.label, marginTop: 18, lineHeight: 1.5 }}>
+        Tip: add a workplace address when logging a shift and tap “Estimate travel” to fill the cost automatically.
       </p>
     </div>
   );

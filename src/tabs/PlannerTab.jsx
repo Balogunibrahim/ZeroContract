@@ -467,7 +467,7 @@ function LedgerRow({ s, onEdit, onDelete, onTogglePaid }) {
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(s.id); }}
           aria-label="Delete shift"
-          style={{ border: "none", background: "none", padding: 0, color: COLORS.label, cursor: "pointer", display: "flex" }}
+          style={{ border: "none", background: "none", padding: 8, margin: -8, color: COLORS.label, cursor: "pointer", display: "flex" }}
         >
           <Trash2 size={16} />
         </button>

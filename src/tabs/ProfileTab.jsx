@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useId, cloneElement, isValidElement } from "react";
 import {
   PoundSterling,
   Clock,
@@ -340,10 +340,12 @@ const fieldLabel = { fontFamily: FONTS.body, fontSize: 11, fontWeight: 600, lett
 const input = { width: "100%", boxSizing: "border-box", padding: "12px 14px", border: `1px solid ${COLORS.border}`, borderRadius: 12, background: COLORS.card, fontFamily: FONTS.body, fontSize: 15, color: COLORS.ink, outline: "none" };
 
 function Field({ label, children }) {
+  const id = useId();
+  const child = isValidElement(children) ? cloneElement(children, { id }) : children;
   return (
     <div style={{ marginBottom: 14 }}>
-      <label style={fieldLabel}>{label}</label>
-      {children}
+      <label htmlFor={id} style={fieldLabel}>{label}</label>
+      {child}
     </div>
   );
 }
