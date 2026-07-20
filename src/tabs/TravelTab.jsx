@@ -11,7 +11,7 @@ import {
 
 export default function TravelTab({ shiftsWithTravel, totalTravelCost }) {
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.75rem 1.25rem 6rem" }}>
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.5rem 1.25rem calc(6rem + env(safe-area-inset-bottom, 0px))" }}>
       <ScreenLabel>Getting there costs</ScreenLabel>
       <DisplayHeader>Travel</DisplayHeader>
 

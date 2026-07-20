@@ -124,7 +124,7 @@ export default function PlannerTab({ future, past, onEdit, onDelete, onTogglePai
   }, [sorted, group, sortDir]);
 
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.75rem 1.25rem 6rem" }}>
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.5rem 1.25rem calc(6rem + env(safe-area-inset-bottom, 0px))" }}>
       <ScreenLabel>Shift roster</ScreenLabel>
       <DisplayHeader>Shifts</DisplayHeader>
 

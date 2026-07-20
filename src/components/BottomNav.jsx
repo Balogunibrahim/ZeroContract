@@ -46,7 +46,9 @@ export default function BottomNav({ active, onChange, onAddShift }) {
             backdropFilter: "blur(18px)",
             WebkitBackdropFilter: "blur(18px)",
             borderTop: `1px solid ${COLORS.line}`,
-            padding: "8px 10px",
+            paddingTop: 8,
+            paddingLeft: "calc(10px + env(safe-area-inset-left, 0px))",
+            paddingRight: "calc(10px + env(safe-area-inset-right, 0px))",
             paddingBottom: "calc(10px + env(safe-area-inset-bottom, 0px))",
           }}
         >

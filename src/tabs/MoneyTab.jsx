@@ -22,7 +22,7 @@ export default function MoneyTab({ profile, taxEstimate, baselineEarnings }) {
       : null;
 
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.75rem 1.25rem 6rem" }}>
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.5rem 1.25rem calc(6rem + env(safe-area-inset-bottom, 0px))" }}>
       <ScreenLabel>Tax &amp; offers</ScreenLabel>
       <DisplayHeader>Money</DisplayHeader>
 

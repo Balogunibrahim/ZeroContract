@@ -51,6 +51,7 @@ function TopBar({ firstName, onProfile }) {
         zIndex: 30,
         background: UI.bg,
         borderBottom: `1px solid ${UI.border}`,
+        paddingTop: "env(safe-area-inset-top, 0px)",
       }}
     >
       <div

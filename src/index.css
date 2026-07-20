@@ -31,11 +31,24 @@ html,
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
   background: var(--bg);
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
 }
 
 #root {
   min-height: 100svh;
+}
+
+/* Prevent iOS from zooming in when a form field is focused:
+   any input under 16px triggers auto-zoom on Safari. */
+@media (max-width: 480px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 h1,

@@ -39,7 +39,7 @@ export default function HomeTab({
       style={{
         maxWidth: 560,
         margin: "0 auto",
-        padding: "1.5rem 1.25rem 6rem",
+        padding: "1.5rem 1.25rem calc(6rem + env(safe-area-inset-bottom, 0px))",
         textAlign: "left",
       }}
     >

@@ -76,7 +76,7 @@ export default function ProfileTab({ profile, session, onSave, onShowPrivacy, on
   const prefsSub = "Currency, week start, theme";
 
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.25rem 1.25rem 6rem" }}>
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.5rem 1.25rem calc(6rem + env(safe-area-inset-bottom, 0px))" }}>
       <ScreenLabel>Account</ScreenLabel>
       <h1
         style={{
