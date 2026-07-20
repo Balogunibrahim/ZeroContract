@@ -75,6 +75,24 @@ export async function attachAutocomplete(inputEl, onSelect) {
   }
 }
 
+// Turns a text address into { lat, lng } using Google's geocoder.
+// Used as a fallback location for the weather card when the browser
+// won't share GPS coordinates.
+export async function geocodeAddress(address) {
+  await loadMaps();
+  return new Promise((resolve, reject) => {
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ address }, (results, status) => {
+      if (status === "OK" && results && results[0]) {
+        const loc = results[0].geometry.location;
+        resolve({ lat: loc.lat(), lng: loc.lng() });
+      } else {
+        reject(new Error("Couldn't locate that address."));
+      }
+    });
+  });
+}
+
 // Converts a one-way distance into an estimated ROUND TRIP cost in GBP.
 // Driving: 45p per mile (about 28p per km), both ways.
 // Transit: uses Google's fare if known (both ways); otherwise returns null

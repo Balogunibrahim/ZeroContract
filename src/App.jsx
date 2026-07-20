@@ -431,6 +431,7 @@ function MainApp({ session, onShowPrivacy, offline }) {
       {activeTab === "home" && (
         <HomeTab
           firstName={profile?.first_name || ""}
+          homeAddress={profile?.home_address || ""}
           totalEarned={totalEarned}
           upcomingCount={future.length}
           totalUnpaid={totalUnpaid}

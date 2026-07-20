@@ -8,9 +8,11 @@ import {
   daysUntil,
   Ring,
 } from "../theme";
+import WeatherCard from "../components/WeatherCard";
 
 export default function HomeTab({
   firstName,
+  homeAddress,
   totalEarned,
   upcomingCount,
   totalUnpaid,
@@ -56,6 +58,9 @@ export default function HomeTab({
       >
         {firstName ? `Hi, ${firstName}` : "Your ledger"}
       </h2>
+
+      {/* Today's weather + outfit tip */}
+      <WeatherCard homeAddress={homeAddress} />
 
       {/* Earnings hero */}
       <div
