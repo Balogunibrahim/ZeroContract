@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import { getDistance, estimateTravelCost, attachAutocomplete } from "../utils/mapsUtils";
 import { COLORS, FONTS, formatMoney } from "../theme";
 
-const fieldLabelStyle = {
+const flabel = {
   fontFamily: FONTS.body,
   fontSize: 10,
   fontWeight: 600,
@@ -11,34 +11,7 @@ const fieldLabelStyle = {
   textTransform: "uppercase",
   color: COLORS.label,
   display: "block",
-  marginBottom: 6,
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  boxSizing: "border-box",
-  border: `1px solid ${COLORS.border}`,
-  borderBottom: `2px solid ${COLORS.ink}`,
-  borderRadius: 2,
-  background: COLORS.card,
-  fontFamily: FONTS.body,
-  fontSize: 15,
-  color: COLORS.ink,
-  outline: "none",
-};
-
-const primaryButtonStyle = {
-  width: "100%",
-  padding: "13px 16px",
-  borderRadius: 2,
-  border: "none",
-  background: COLORS.black,
-  color: "#fff",
-  cursor: "pointer",
-  fontSize: 14,
-  fontWeight: 600,
-  fontFamily: FONTS.body,
+  marginBottom: 7,
 };
 
 function todayISO() {
@@ -52,8 +25,17 @@ function calcHours(start, end) {
   if (mins < 0) mins += 24 * 60;
   return Math.round((mins / 60) * 100) / 100;
 }
+function money(n) {
+  return (Number(n) || 0).toFixed(2);
+}
 
-export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddress, onSave, onClose, saving, saveError }) {
+const MODES = [
+  { id: "driving", label: "Drive" },
+  { id: "transit", label: "Bus / train" },
+  { id: "walking", label: "Walk" },
+];
+
+export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddress, employers = [], onAddEmployer, onSave, onClose, saving, saveError }) {
   const [form, setForm] = useState({
     date: todayISO(),
     start: "09:00",
@@ -65,11 +47,16 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
     travelCost: "0",
     workAddress: lastWorkAddress || "",
     travelMode: "driving",
+    employer: "",
   });
   const [estBusy, setEstBusy] = useState(false);
   const [estError, setEstError] = useState("");
   const [estInfo, setEstInfo] = useState("");
   const [distanceKm, setDistanceKm] = useState(null);
+  const [addingEmp, setAddingEmp] = useState(false);
+  const [newEmp, setNewEmp] = useState({ name: "", rate: "" });
+  const [empErr, setEmpErr] = useState("");
+  const [empBusy, setEmpBusy] = useState(false);
   const workAddressRef = useRef(null);
 
   useEffect(() => {
@@ -91,16 +78,45 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
         travelCost: String(editingShift.travelCost || 0),
         workAddress: editingShift.workAddress || "",
         travelMode: editingShift.travelMode || "driving",
+        employer: editingShift.employer || "",
       });
       setDistanceKm(editingShift.distanceKm || null);
     }
   }, [editingShift]);
 
+  const selectEmployer = (name) => {
+    const emp = employers.find((e) => e.name === name);
+    setForm((f) => ({ ...f, employer: name, ...(emp ? { rate: String(emp.rate) } : {}) }));
+  };
+
+  const saveNewEmployer = async () => {
+    setEmpErr("");
+    const name = newEmp.name.trim();
+    const rate = parseFloat(newEmp.rate);
+    if (!name) { setEmpErr("Give the employer a name."); return; }
+    if (!(rate > 0)) { setEmpErr("Set an hourly rate."); return; }
+    if (employers.some((e) => e.name.toLowerCase() === name.toLowerCase())) {
+      setEmpErr("You already have an employer with that name.");
+      return;
+    }
+    setEmpBusy(true);
+    const id = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
+    try {
+      await onAddEmployer({ id, name, rate });
+      setForm((f) => ({ ...f, employer: name, rate: String(rate) }));
+      setNewEmp({ name: "", rate: "" });
+      setAddingEmp(false);
+    } catch (err) {
+      setEmpErr("Couldn't save that employer. Try again.");
+    }
+    setEmpBusy(false);
+  };
+
   const handleEstimate = async () => {
     setEstError("");
     setEstInfo("");
     if (!homeAddress) {
-      setEstError("Add your home address in the Profile tab first, then come back here.");
+      setEstError("Add your home address in Settings first, then come back here.");
       return;
     }
     if (!form.workAddress.trim()) {
@@ -114,7 +130,11 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
       const cost = estimateTravelCost(result.distanceKm, form.travelMode, result.fare);
       if (cost != null) {
         setForm((f) => ({ ...f, travelCost: String(cost) }));
-        setEstInfo(result.distanceKm + " km each way, about " + result.durationText + ". Round trip estimate filled in below.");
+        if (form.travelMode === "walking") {
+          setEstInfo(result.distanceKm + " km each way, about " + result.durationText + " on foot. No travel cost.");
+        } else {
+          setEstInfo(result.distanceKm + " km each way, about " + result.durationText + ". Round trip estimate filled in below.");
+        }
       } else {
         setEstInfo(result.distanceKm + " km each way, about " + result.durationText + ". Google doesn't know the fare here, so type your usual return fare into Travel cost.");
       }
@@ -125,107 +145,370 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
   };
 
   const hours = calcHours(form.start, form.end);
-  const est = hours * (parseFloat(form.rate) || 0);
+  const rate = parseFloat(form.rate) || 0;
+  const travel = parseFloat(form.travelCost) || 0;
+  const gross = hours * rate;
+  const takeHome = gross - travel;
+  const realRate = hours > 0 ? takeHome / hours : 0;
+
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(20,20,20,0.6)",
+        background: "rgba(11,33,25,0.55)",
+        backdropFilter: "blur(2px)",
+        WebkitBackdropFilter: "blur(2px)",
         zIndex: 60,
         display: "flex",
         justifyContent: "center",
-        alignItems: "flex-start",
-        overflowY: "auto",
-        padding: "2rem 1rem",
+        alignItems: "flex-end",
         fontFamily: FONTS.body,
       }}
+      onClick={onClose}
     >
-      <div style={{ background: COLORS.bg, borderRadius: 2, maxWidth: 460, width: "100%", padding: "1.75rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-          <p style={{ fontFamily: FONTS.body, fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: COLORS.ink, margin: 0 }}>
-            {editingShift ? "Edit shift" : "New shift"}
-          </p>
-          <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", padding: 4, display: "flex" }}>
-            <X size={18} color={COLORS.inkSoft} />
+      <style>{`
+        .asf-inp{width:100%;padding:12px 14px;border:1px solid ${COLORS.border};border-radius:13px;
+          background:#fff;font-family:'Inter',sans-serif;font-size:15px;color:${COLORS.ink};outline:none;
+          box-sizing:border-box;transition:border-color .15s,box-shadow .15s}
+        .asf-inp:focus{border-color:${COLORS.brand};box-shadow:0 0 0 3px rgba(10,123,87,.12)}
+        .asf-body::-webkit-scrollbar{display:none}
+      `}</style>
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: COLORS.bg,
+          borderRadius: "26px 26px 0 0",
+          boxShadow: "0 -20px 50px rgba(0,0,0,.3)",
+          maxWidth: 480,
+          width: "100%",
+          maxHeight: "94vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* grab handle */}
+        <div style={{ width: 38, height: 5, borderRadius: 3, background: "#D3DAD6", margin: "10px auto 0" }} />
+
+        {/* header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px 8px" }}>
+          <h2 style={{ fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, letterSpacing: "-0.01em", color: COLORS.ink, margin: 0 }}>
+            {editingShift ? "Edit shift" : "Add shift"}
+          </h2>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            style={{ width: 34, height: 34, borderRadius: 11, border: `1px solid ${COLORS.border}`, background: "#fff", display: "grid", placeItems: "center", color: COLORS.inkSoft, cursor: "pointer" }}
+          >
+            <X size={16} />
           </button>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 14 }}>
-          <div><label style={fieldLabelStyle}>Date</label><input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} style={inputStyle} /></div>
-          <div><label style={fieldLabelStyle}>Start</label><input type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} style={inputStyle} /></div>
-          <div><label style={fieldLabelStyle}>End</label><input type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} style={inputStyle} /></div>
-          <div><label style={fieldLabelStyle}>Rate / hr</label><input type="number" step="0.01" placeholder="12.50" value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value })} style={inputStyle} /></div>
-          <div><label style={fieldLabelStyle}>Payday</label><input type="date" value={form.payday} onChange={(e) => setForm({ ...form, payday: e.target.value })} style={inputStyle} /></div>
-          <div><label style={fieldLabelStyle}>Travel cost</label><input type="number" step="0.01" placeholder="0" value={form.travelCost} onChange={(e) => setForm({ ...form, travelCost: e.target.value })} style={inputStyle} /></div>
-        </div>
-
-        <div style={{ marginBottom: 14 }}>
-          <label style={fieldLabelStyle}>Workplace / location (optional)</label>
-          <input
-            ref={workAddressRef}
-            type="text"
-            placeholder="e.g. O2 Arena, security"
-            value={form.workAddress}
-            onChange={(e) => setForm({ ...form, workAddress: e.target.value })}
-            style={inputStyle}
-          />
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10, alignItems: "end", marginBottom: 8 }}>
-          <div>
-            <label style={fieldLabelStyle}>How you'll travel</label>
-            <select value={form.travelMode} onChange={(e) => setForm({ ...form, travelMode: e.target.value })} style={{ ...inputStyle, appearance: "none", cursor: "pointer" }}>
-              <option value="driving">Driving</option>
-              <option value="transit">Public transport</option>
-            </select>
-          </div>
-          <button
-            type="button"
-            onClick={handleEstimate}
-            disabled={estBusy}
+        {/* scrollable body */}
+        <div className="asf-body" style={{ overflowY: "auto", padding: "6px 20px 22px" }}>
+          {/* live preview */}
+          <div
             style={{
-              padding: "10px 14px",
-              borderRadius: 2,
-              border: `1px solid ${COLORS.ink}`,
-              background: COLORS.card,
-              color: COLORS.ink,
-              cursor: "pointer",
-              fontSize: 11,
-              fontWeight: 700,
-              fontFamily: FONTS.body,
-              letterSpacing: 1,
-              textTransform: "uppercase",
-              whiteSpace: "nowrap",
+              background: "linear-gradient(150deg,#0B4835,#0B3D2E 70%,#092b21)",
+              borderRadius: 20,
+              padding: 18,
+              color: "#fff",
+              position: "relative",
+              overflow: "hidden",
+              marginBottom: 20,
             }}
           >
-            {estBusy ? "..." : "Estimate travel"}
+            <div style={{ position: "absolute", right: -30, top: -40, width: 150, height: 150, background: "radial-gradient(circle,rgba(224,160,43,.22),transparent 70%)", borderRadius: "50%" }} />
+            <div style={{ fontSize: 11, color: "#9FD0BE", letterSpacing: ".04em", textTransform: "uppercase", fontWeight: 600, position: "relative", zIndex: 2 }}>
+              This shift pays
+            </div>
+            <div style={{ fontFamily: FONTS.display, fontSize: 40, fontWeight: 700, letterSpacing: "-0.02em", margin: "2px 0 0", lineHeight: 1, fontVariantNumeric: "tabular-nums", position: "relative", zIndex: 2 }}>
+              <span style={{ color: "#7FC9AC", fontSize: 22 }}>£</span>
+              {money(gross)}
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "14px 18px", marginTop: 14, position: "relative", zIndex: 2 }}>
+              <div style={{ fontSize: 11, color: "#BFE0D3" }}>
+                <b style={{ display: "block", fontFamily: FONTS.display, fontSize: 15, color: "#fff", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{hours.toFixed(1)}h</b>
+                worked
+              </div>
+              <div style={{ fontSize: 11, color: "#BFE0D3" }}>
+                <b style={{ display: "block", fontFamily: FONTS.display, fontSize: 15, color: "#fff", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>£{money(travel)}</b>
+                travel
+              </div>
+              <div style={{ fontSize: 11, color: "#BFE0D3" }}>
+                <b style={{ display: "block", fontFamily: FONTS.display, fontSize: 15, color: "#7FC9AC", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>£{money(takeHome)}</b>
+                take home
+              </div>
+              <div style={{ fontSize: 11, color: "#BFE0D3" }}>
+                <b style={{ display: "block", fontFamily: FONTS.display, fontSize: 15, color: "#F0C766", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>£{realRate.toFixed(2)}/h</b>
+                real rate
+              </div>
+            </div>
+          </div>
+
+          {/* Date */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={flabel}>Date</label>
+            <input className="asf-inp" type="date" value={form.date} onChange={(e) => set({ date: e.target.value })} />
+          </div>
+
+          {/* Start / End */}
+          <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+            <div style={{ flex: 1 }}>
+              <label style={flabel}>Start</label>
+              <input className="asf-inp" type="time" value={form.start} onChange={(e) => set({ start: e.target.value })} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={flabel}>End</label>
+              <input className="asf-inp" type="time" value={form.end} onChange={(e) => set({ end: e.target.value })} />
+            </div>
+          </div>
+
+          {/* Employer */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={flabel}>Employer</label>
+            {!addingEmp ? (
+              <select
+                className="asf-inp"
+                value={form.employer && !employers.some((e) => e.name === form.employer) ? "__custom" : form.employer}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === "__new") { setEmpErr(""); setAddingEmp(true); }
+                  else if (v === "__custom") { /* keep current custom value */ }
+                  else selectEmployer(v);
+                }}
+                style={{ appearance: "none", WebkitAppearance: "none", cursor: "pointer" }}
+              >
+                <option value="">No employer / one-off</option>
+                {form.employer && !employers.some((e) => e.name === form.employer) && (
+                  <option value="__custom">{form.employer}</option>
+                )}
+                {employers.map((e) => (
+                  <option key={e.id || e.name} value={e.name}>
+                    {e.name} · £{e.rate}/h
+                  </option>
+                ))}
+                <option value="__new">+ Add new employer…</option>
+              </select>
+            ) : (
+              <div style={{ background: "#fff", border: `1px solid ${COLORS.border}`, borderRadius: 13, padding: 12 }}>
+                <input
+                  className="asf-inp"
+                  type="text"
+                  placeholder="Employer name"
+                  value={newEmp.name}
+                  onChange={(e) => setNewEmp((n) => ({ ...n, name: e.target.value }))}
+                  style={{ marginBottom: 8 }}
+                  autoFocus
+                />
+                <input
+                  className="asf-inp"
+                  type="number"
+                  step="0.25"
+                  inputMode="decimal"
+                  placeholder="Hourly rate (£)"
+                  value={newEmp.rate}
+                  onChange={(e) => setNewEmp((n) => ({ ...n, rate: e.target.value }))}
+                />
+                {empErr && <p style={{ color: COLORS.danger, fontSize: 12, margin: "8px 0 0" }}>{empErr}</p>}
+                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <button
+                    type="button"
+                    onClick={saveNewEmployer}
+                    disabled={empBusy}
+                    style={{ flex: 1, padding: "10px 0", borderRadius: 11, border: "none", background: COLORS.brand, color: "#fff", fontFamily: FONTS.body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}
+                  >
+                    {empBusy ? "Saving…" : "Save employer"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAddingEmp(false); setEmpErr(""); setNewEmp({ name: "", rate: "" }); }}
+                    style={{ flex: "0 0 auto", padding: "10px 16px", borderRadius: 11, border: `1px solid ${COLORS.border}`, background: "#fff", color: COLORS.inkSoft, fontFamily: FONTS.body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Rate */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={flabel}>Hourly rate (£){form.employer ? " · from employer, editable" : ""}</label>
+            <input className="asf-inp" type="number" step="0.25" inputMode="decimal" placeholder="12.50" value={form.rate} onChange={(e) => set({ rate: e.target.value })} />
+          </div>
+
+          {/* Workplace address + estimate */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={flabel}>Workplace address</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                ref={workAddressRef}
+                className="asf-inp"
+                type="text"
+                placeholder="Where is the shift?"
+                value={form.workAddress}
+                onChange={(e) => set({ workAddress: e.target.value })}
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={handleEstimate}
+                disabled={estBusy}
+                style={{
+                  flex: "0 0 auto",
+                  padding: "0 15px",
+                  borderRadius: 13,
+                  border: `1px solid ${COLORS.brand}`,
+                  background: COLORS.tint,
+                  color: COLORS.brand,
+                  fontFamily: FONTS.body,
+                  fontWeight: 600,
+                  fontSize: 12.5,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {estBusy ? "…" : "Estimate travel"}
+              </button>
+            </div>
+            {estInfo && (
+              <div style={{ fontSize: 11.5, color: COLORS.brand, marginTop: 7, background: COLORS.tint, borderRadius: 10, padding: "8px 11px", lineHeight: 1.4 }}>
+                {estInfo}
+              </div>
+            )}
+            {estError && (
+              <div style={{ fontSize: 11.5, color: COLORS.danger, marginTop: 7, lineHeight: 1.4 }}>
+                {estError}
+              </div>
+            )}
+          </div>
+
+          {/* Getting there */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={flabel}>Getting there</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              {MODES.map((m) => {
+                const on = form.travelMode === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => set({ travelMode: m.id })}
+                    style={{
+                      flex: 1,
+                      padding: "10px 0",
+                      borderRadius: 12,
+                      border: on ? "1px solid transparent" : `1px solid ${COLORS.border}`,
+                      background: on ? COLORS.deep : "#fff",
+                      color: on ? "#fff" : COLORS.inkSoft,
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      fontFamily: FONTS.body,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {m.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Travel cost */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={flabel}>Travel cost, round trip (£)</label>
+            <input className="asf-inp" type="number" step="0.50" inputMode="decimal" placeholder="0.00" value={form.travelCost} onChange={(e) => set({ travelCost: e.target.value })} />
+          </div>
+
+          {/* Payday */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={flabel}>Payday</label>
+            <input className="asf-inp" type="date" value={form.payday} onChange={(e) => set({ payday: e.target.value })} />
+          </div>
+
+          {/* Already paid toggle */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", border: `1px solid ${COLORS.border}`, borderRadius: 13, padding: "13px 15px" }}>
+              <div style={{ fontSize: 14, fontWeight: 500, color: COLORS.ink }}>
+                Already paid?
+                <small style={{ display: "block", fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 400, marginTop: 2 }}>Mark this shift as settled</small>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={form.paid}
+                aria-label="Already paid"
+                onClick={() => set({ paid: !form.paid })}
+                style={{
+                  width: 46,
+                  height: 27,
+                  borderRadius: 20,
+                  background: form.paid ? COLORS.brand : "#D3DAD6",
+                  position: "relative",
+                  cursor: "pointer",
+                  flex: "0 0 46px",
+                  border: "none",
+                  padding: 0,
+                  transition: "background .18s",
+                }}
+              >
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 3,
+                    left: form.paid ? 22 : 3,
+                    width: 21,
+                    height: 21,
+                    borderRadius: "50%",
+                    background: "#fff",
+                    boxShadow: "0 1px 3px rgba(0,0,0,.25)",
+                    transition: "left .18s",
+                  }}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={flabel}>Notes</label>
+            <textarea
+              className="asf-inp"
+              placeholder="Anything to remember about this shift"
+              value={form.notes}
+              onChange={(e) => set({ notes: e.target.value })}
+              style={{ resize: "none", minHeight: 64 }}
+            />
+          </div>
+
+          {saveError && <p style={{ fontFamily: FONTS.body, color: COLORS.danger, fontSize: 13, margin: "0 0 12px" }}>{saveError}</p>}
+
+          <button
+            onClick={() => onSave({ ...form, distanceKm })}
+            disabled={saving}
+            style={{
+              width: "100%",
+              padding: 15,
+              borderRadius: 15,
+              border: "none",
+              cursor: "pointer",
+              background: "linear-gradient(135deg,#0A7B57,#0B3D2E)",
+              color: "#fff",
+              fontFamily: FONTS.body,
+              fontWeight: 600,
+              fontSize: 15,
+              boxShadow: "0 12px 24px -10px rgba(10,123,87,.6)",
+              marginTop: 6,
+              opacity: saving ? 0.7 : 1,
+            }}
+          >
+            {saving ? "Saving…" : editingShift ? "Save changes" : "Save shift"}
           </button>
         </div>
-
-        {estError && <p style={{ fontFamily: FONTS.body, color: COLORS.danger, fontSize: 12.5, margin: "0 0 10px", lineHeight: 1.4 }}>{estError}</p>}
-        {estInfo && <p style={{ fontFamily: FONTS.body, color: COLORS.inkSoft, fontSize: 12.5, margin: "0 0 10px", lineHeight: 1.4 }}>{estInfo}</p>}
-
-        <div style={{ marginBottom: 14 }}>
-          <label style={fieldLabelStyle}>Notes</label>
-          <input type="text" placeholder="e.g. Covering for Sam" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} style={inputStyle} />
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: FONTS.body, fontSize: 14, color: COLORS.inkSoft }}>
-            <input type="checkbox" checked={form.paid} onChange={(e) => setForm({ ...form, paid: e.target.checked })} /> Already paid
-          </label>
-          <span style={{ fontFamily: FONTS.body, fontSize: 14, fontWeight: 600, color: COLORS.ink }}>
-            {hours.toFixed(1)}h &middot; est. {formatMoney(est)}
-          </span>
-        </div>
-
-        {saveError && <p style={{ fontFamily: FONTS.body, color: COLORS.danger, fontSize: 13, marginBottom: 12 }}>{saveError}</p>}
-
-        <button onClick={() => onSave({ ...form, distanceKm })} disabled={saving} style={primaryButtonStyle}>
-          {saving ? "Saving..." : editingShift ? "Save changes" : "Add to ledger"}
-        </button>
       </div>
     </div>
   );

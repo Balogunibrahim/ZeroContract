@@ -32,6 +32,8 @@ export async function getDistance(homeAddress, workAddress, mode) {
         travelMode:
           mode === "transit"
             ? window.google.maps.TravelMode.TRANSIT
+            : mode === "walking"
+            ? window.google.maps.TravelMode.WALKING
             : window.google.maps.TravelMode.DRIVING,
       },
       (response, status) => {
@@ -78,6 +80,7 @@ export async function attachAutocomplete(inputEl, onSelect) {
 // Transit: uses Google's fare if known (both ways); otherwise returns null
 // so the user can type the real fare themselves.
 export function estimateTravelCost(distanceKm, mode, fare) {
+  if (mode === "walking") return 0;
   if (mode === "transit") {
     if (fare != null) return Math.round(fare * 2 * 100) / 100;
     return null;

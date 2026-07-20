@@ -1,0 +1,276 @@
+/* ==========================================================================
+   Zero Contract — "Greenbar" design system
+   The fanfold payroll ledger: sprocket holes, green bar stripes, ink.
+   Import once, e.g. in main.jsx:  import './styles/greenbar.css'
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&family=Sometype+Mono:wght@400;500;700&display=swap');
+
+:root {
+  /* ---- colour ---- */
+  --zc-ink: #17211B;
+  --zc-ink-70: rgba(23, 33, 27, .66);
+  --zc-ink-40: rgba(23, 33, 27, .40);
+  --zc-ink-15: rgba(23, 33, 27, .14);
+  --zc-paper: #F7F7F2;
+  --zc-bar: #DCE8D2;          /* the green bar stripe */
+  --zc-rule: #B9C6AE;
+  --zc-banked: #1E6B4B;       /* money that landed */
+  --zc-due: #A85B12;          /* money that hasn't */
+  --zc-backdrop: #0E140F;
+
+  /* ---- type ---- */
+  --zc-disp: 'Familjen Grotesk', system-ui, sans-serif;
+  --zc-body: 'Instrument Sans', system-ui, sans-serif;
+  --zc-mono: 'Sometype Mono', ui-monospace, monospace;
+
+  /* ---- space ---- */
+  --zc-gutter: 18px;
+  --zc-radius: 3px;
+}
+
+/* ---- app shell ---------------------------------------------------------- */
+.zc-app {
+  background: var(--zc-backdrop);
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  font-family: var(--zc-body);
+  color: var(--zc-ink);
+  -webkit-font-smoothing: antialiased;
+}
+.zc-col {
+  width: 100%;
+  max-width: 460px;
+  background: var(--zc-paper);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.zc-scroll { flex: 1; overflow-y: auto; }
+.zc-scroll::-webkit-scrollbar { width: 0; }
+
+/* ---- fanfold perforation ------------------------------------------------ */
+.zc-perf {
+  height: 12px;
+  flex: none;
+  background: var(--zc-ink);
+  -webkit-mask-image: radial-gradient(circle 3.5px at 11px 6px, transparent 99%, #000 100%);
+  mask-image: radial-gradient(circle 3.5px at 11px 6px, transparent 99%, #000 100%);
+  -webkit-mask-size: 22px 12px;
+  mask-size: 22px 12px;
+}
+.zc-perf--up { transform: rotate(180deg); }
+
+/* ---- header ------------------------------------------------------------- */
+.zc-hd {
+  background: var(--zc-ink);
+  color: var(--zc-paper);
+  padding: 14px var(--zc-gutter) 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+.zc-wordmark {
+  font-family: var(--zc-disp);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.zc-wordmark span { opacity: .45; }
+.zc-hd-r {
+  margin-left: auto;
+  font-family: var(--zc-mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  opacity: .6;
+}
+
+/* ---- type primitives ---------------------------------------------------- */
+.zc-eyebrow {
+  font-family: var(--zc-mono);
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--zc-ink-40);
+}
+.zc-mono { font-family: var(--zc-mono); font-variant-numeric: tabular-nums; }
+.zc-sec-head { display: flex; align-items: baseline; padding: 20px var(--zc-gutter) 9px; }
+.zc-sec-title { font-family: var(--zc-disp); font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
+.zc-sec-note { margin-left: auto; font-family: var(--zc-mono); font-size: 10px; color: var(--zc-ink-40); }
+
+/* ---- hero --------------------------------------------------------------- */
+.zc-hero { padding: 22px var(--zc-gutter) 18px; }
+.zc-hero-amt {
+  font-family: var(--zc-mono);
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+  margin: 8px 0 6px;
+}
+.zc-hero-amt--none { font-size: 26px; color: var(--zc-ink-40); }
+.zc-hero-sub { font-size: 13px; color: var(--zc-ink-70); }
+.zc-hero-sub b { font-weight: 600; color: var(--zc-ink); }
+
+/* ---- tiles -------------------------------------------------------------- */
+.zc-tiles {
+  display: grid;
+  border-top: 1px solid var(--zc-rule);
+  border-bottom: 1px solid var(--zc-rule);
+}
+.zc-tiles--3 { grid-template-columns: 1fr 1fr 1fr; }
+.zc-tiles--2 { grid-template-columns: 1fr 1fr; }
+.zc-tile { padding: 13px 12px 14px; border-right: 1px solid var(--zc-rule); }
+.zc-tile:last-child { border-right: none; }
+.zc-tile-v {
+  font-family: var(--zc-mono);
+  font-weight: 700;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  margin-top: 5px;
+}
+.zc-tile-n { font-family: var(--zc-mono); font-size: 9px; color: var(--zc-ink-40); margin-top: 3px; }
+
+/* ---- greenbar rows ------------------------------------------------------ */
+.zc-rows { border-top: 1px solid var(--zc-rule); }
+.zc-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px var(--zc-gutter);
+  border: none;
+  border-bottom: 1px solid rgba(185, 198, 174, .5);
+  background: var(--zc-paper);
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.zc-row:nth-child(odd) { background: var(--zc-bar); }
+button.zc-row { cursor: pointer; }
+button.zc-row:hover { box-shadow: inset 3px 0 0 var(--zc-ink); }
+.zc-row-d { font-family: var(--zc-mono); font-size: 11px; width: 44px; flex: none; line-height: 1.2; color: var(--zc-ink-70); }
+.zc-row-d b { display: block; font-weight: 700; font-size: 15px; color: var(--zc-ink); }
+.zc-row-m { flex: 1; min-width: 0; }
+.zc-row-t { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zc-row-s { font-family: var(--zc-mono); font-size: 10.5px; color: var(--zc-ink-70); margin-top: 2px; }
+.zc-row-a { font-family: var(--zc-mono); font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; text-align: right; }
+.zc-row-x { text-align: right; margin-top: 3px; }
+
+/* ---- rubber stamp ------------------------------------------------------- */
+.zc-stamp {
+  display: inline-block;
+  font-family: var(--zc-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+.zc-stamp--landed { color: var(--zc-banked); }
+.zc-stamp--due { color: var(--zc-due); }
+.zc-stamp--late { color: var(--zc-due); border-style: dashed; }
+.zc-stamp--incoming { color: var(--zc-ink-40); }
+.zc-stamp--nodate { color: var(--zc-ink-40); border-style: dotted; }
+
+/* ---- ink panel ---------------------------------------------------------- */
+.zc-panel { background: var(--zc-ink); color: var(--zc-paper); padding: 14px var(--zc-gutter) 16px; }
+.zc-panel .zc-eyebrow { color: rgba(247, 247, 242, .45); }
+.zc-panel-l {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--zc-mono);
+  font-size: 11px;
+  padding: 4px 0;
+  border-bottom: 1px dotted rgba(247, 247, 242, .2);
+}
+.zc-panel-l:last-of-type { border-bottom: none; }
+
+/* ---- buttons ------------------------------------------------------------ */
+.zc-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--zc-radius);
+  border: none;
+  cursor: pointer;
+  font-family: var(--zc-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  background: var(--zc-paper);
+  color: var(--zc-ink);
+}
+.zc-btn:disabled { opacity: .45; cursor: progress; }
+.zc-btn--ghost {
+  background: transparent;
+  color: rgba(247, 247, 242, .6);
+  box-shadow: inset 0 0 0 1px rgba(247, 247, 242, .3);
+}
+.zc-link {
+  background: none;
+  border: none;
+  font-family: var(--zc-mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--zc-ink-40);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px;
+}
+
+/* ---- takehome split bar ------------------------------------------------- */
+.zc-split {
+  display: flex;
+  height: 14px;
+  border: 1px solid var(--zc-ink);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+.zc-split i { display: block; height: 100%; }
+.zc-key { display: flex; align-items: center; gap: 5px; font-family: var(--zc-mono); font-size: 9px; letter-spacing: .06em; color: var(--zc-ink-70); text-transform: uppercase; }
+.zc-key i { width: 9px; height: 9px; border-radius: 50%; display: block; flex: none; }
+
+/* ---- lag strip ---------------------------------------------------------- */
+.zc-lag { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+.zc-lag::-webkit-scrollbar { height: 0; }
+.zc-tie { animation: zc-draw 1s cubic-bezier(.4, 0, .2, 1) forwards; }
+@keyframes zc-draw { to { stroke-dashoffset: 0; } }
+
+/* ---- states ------------------------------------------------------------- */
+.zc-empty { padding: 32px 24px 36px; text-align: center; }
+.zc-empty p { font-size: 13px; color: var(--zc-ink-70); margin-top: 7px; line-height: 1.5; }
+.zc-err {
+  margin: 12px var(--zc-gutter) 0;
+  border: 1px dashed var(--zc-due);
+  color: var(--zc-due);
+  padding: 9px 11px;
+  font-family: var(--zc-mono);
+  font-size: 11px;
+  border-radius: 2px;
+}
+.zc-note { font-size: 11.5px; color: var(--zc-ink-70); line-height: 1.5; }
+
+/* ---- skeleton ----------------------------------------------------------- */
+.zc-skel {
+  background: linear-gradient(90deg, var(--zc-bar) 25%, var(--zc-paper) 50%, var(--zc-bar) 75%);
+  background-size: 400% 100%;
+  animation: zc-shimmer 1.4s linear infinite;
+  border-radius: 2px;
+}
+@keyframes zc-shimmer { to { background-position: -400% 0; } }
+
+/* ---- a11y floor --------------------------------------------------------- */
+:where(.zc-app) :focus-visible { outline: 2px solid var(--zc-due); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .zc-tie { animation: none; stroke-dashoffset: 0 !important; }
+  .zc-skel { animation: none; }
+}

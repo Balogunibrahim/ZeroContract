@@ -1,11 +1,12 @@
 import {
   COLORS,
   FONTS,
-  ScreenLabel,
-  DisplayHeader,
+  cardStyle,
   formatMoney,
   formatRate,
   formatDate,
+  daysUntil,
+  Ring,
 } from "../theme";
 
 export default function HomeTab({
@@ -18,109 +19,381 @@ export default function HomeTab({
   nextShift,
   onSeeBreakdown,
 }) {
+  const takeHome = taxEstimate ? taxEstimate.estimatedTakeHome : null;
+  const takePct =
+    taxEstimate && totalEarned > 0
+      ? Math.round((takeHome / totalEarned) * 100)
+      : null;
+
+  const pdDays = daysUntil(nextPayday);
+  // Cosmetic ring fill: how close payday is, on a rough 30-day view
+  const pdFill =
+    pdDays == null ? 0 : Math.max(6, Math.min(100, (1 - pdDays / 30) * 100));
+
+  const shiftDay = nextShift
+    ? new Date(nextShift.date + "T00:00:00").getDate()
+    : null;
+
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.75rem 1.25rem 6rem" }}>
-      <ScreenLabel>
-        Zero Contract{firstName ? ` · ${firstName}'s ledger` : ""}
-      </ScreenLabel>
-
-      <DisplayHeader>Earned</DisplayHeader>
-
-      <p style={{ ...labelSmall, marginBottom: 6 }}>Earned so far</p>
-      <p style={amountStyle}>{formatMoney(totalEarned)}</p>
-
-      {taxEstimate && (
-        <p style={{ fontFamily: FONTS.body, fontSize: 13.5, color: COLORS.inkSoft, margin: "10px 0 0" }}>
-          Est. take home {formatMoney(taxEstimate.estimatedTakeHome)} &nbsp;&mdash;&nbsp;
-          <button onClick={onSeeBreakdown} style={linkStyle}>see breakdown</button>
-        </p>
-      )}
-
-      {/* Three-up stat strip */}
-      <div
+    <div
+      style={{
+        maxWidth: 560,
+        margin: "0 auto",
+        padding: "1.5rem 1.25rem 6rem",
+        textAlign: "left",
+      }}
+    >
+      <p style={{ ...label, marginBottom: 2 }}>Welcome back</p>
+      <h2
         style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          borderTop: `1px solid ${COLORS.line}`,
-          borderBottom: `1px solid ${COLORS.line}`,
-          margin: "1.75rem 0 0",
+          fontFamily: FONTS.display,
+          fontWeight: 700,
+          fontSize: 24,
+          letterSpacing: "-0.02em",
+          color: COLORS.ink,
+          margin: "0 0 16px",
         }}
       >
-        <Stat label="Upcoming" value={String(upcomingCount)} />
-        <Stat label="Unpaid" value={formatMoney(totalUnpaid)} border />
-        <Stat
-          label="Next payday"
-          value={nextPayday ? formatDate(nextPayday, { weekday: "short", month: "short", day: "numeric" }) : "—"}
-          border
-        />
-      </div>
+        {firstName ? `Hi, ${firstName}` : "Your ledger"}
+      </h2>
 
-      {/* Next up */}
-      <p style={{ ...labelSmall, margin: "2rem 0 12px" }}>Next up</p>
-      {nextShift ? (
-        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 2, padding: "16px 18px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
-            <p style={{ fontFamily: FONTS.body, fontWeight: 700, fontSize: 18, color: COLORS.ink, margin: 0 }}>
-              {formatDate(nextShift.date)}
-            </p>
-            <p style={{ fontFamily: FONTS.body, fontWeight: 700, fontSize: 18, color: COLORS.ink, margin: 0, whiteSpace: "nowrap" }}>
-              {formatMoney(nextShift.earnings)}
-            </p>
-          </div>
-          <p style={{ fontFamily: FONTS.body, fontSize: 13, color: COLORS.inkSoft, margin: "8px 0 0" }}>
-            {nextShift.start} &rarr; {nextShift.end} &middot; {nextShift.hours.toFixed(1)}h &middot; {formatRate(nextShift.rate)}/h
-          </p>
-          {nextShift.notes && (
-            <p style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.ink, margin: "6px 0 0" }}>
-              {nextShift.notes}
-            </p>
+      {/* Earnings hero */}
+      <div
+        style={{
+          background: "linear-gradient(150deg,#0B4835,#0B3D2E 70%,#092b21)",
+          borderRadius: 24,
+          padding: "24px 22px",
+          color: "#fff",
+          position: "relative",
+          overflow: "hidden",
+          boxShadow: "0 18px 38px -18px rgba(11,61,46,.6)",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            right: -40,
+            top: -50,
+            width: 180,
+            height: 180,
+            background:
+              "radial-gradient(circle,rgba(224,160,43,.22),transparent 70%)",
+            borderRadius: "50%",
+          }}
+        />
+        <p style={{ ...label, color: "#9FD0BE", position: "relative" }}>
+          Earned so far
+        </p>
+        <p
+          style={{
+            fontFamily: FONTS.display,
+            fontWeight: 700,
+            fontSize: "clamp(40px, 12vw, 52px)",
+            lineHeight: 1,
+            letterSpacing: "-0.03em",
+            margin: "4px 0 0",
+            position: "relative",
+          }}
+        >
+          {formatMoney(totalEarned)}
+        </p>
+        <div
+          style={{
+            display: "flex",
+            gap: 22,
+            marginTop: 18,
+            position: "relative",
+          }}
+        >
+          <HeroStat label="Upcoming" value={String(upcomingCount)} />
+          <HeroStat label="Unpaid" value={formatMoney(totalUnpaid)} />
+          {takeHome != null && (
+            <HeroStat label="Take home" value={formatMoney(takeHome)} />
           )}
         </div>
+      </div>
+
+      {/* Payday countdown */}
+      {nextPayday && (
+        <div
+          style={{
+            marginTop: 14,
+            background: "linear-gradient(135deg,#FDF6E6,#FBF1DC)",
+            border: "1px solid #EFDCAF",
+            borderRadius: 20,
+            padding: "16px 18px",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          <Ring
+            percent={pdFill}
+            size={58}
+            thickness={7}
+            color={COLORS.gold}
+            track="#F1E2BC"
+          >
+            <div style={{ textAlign: "center", lineHeight: 1 }}>
+              <div
+                style={{
+                  fontFamily: FONTS.display,
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: "#B77E17",
+                }}
+              >
+                {pdDays != null ? pdDays : "—"}
+              </div>
+              <div
+                style={{
+                  fontSize: 8,
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  color: "#C9A24B",
+                }}
+              >
+                DAYS
+              </div>
+            </div>
+          </Ring>
+          <div style={{ flex: 1 }}>
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                color: "#B08A2E",
+                margin: 0,
+              }}
+            >
+              Next payday
+            </p>
+            <p
+              style={{
+                fontFamily: FONTS.display,
+                fontSize: 17,
+                fontWeight: 700,
+                color: "#5C4611",
+                margin: "3px 0 0",
+              }}
+            >
+              {formatDate(nextPayday, {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+            <p style={{ fontSize: 12, color: "#9A7A28", margin: "3px 0 0" }}>
+              <b style={{ fontFamily: FONTS.display, color: "#7A5D16" }}>
+                {formatMoney(totalUnpaid)}
+              </b>{" "}
+              unpaid so far
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Take-home after tax */}
+      {taxEstimate && (
+        <div
+          style={{
+            ...cardStyle,
+            borderRadius: 20,
+            marginTop: 14,
+            padding: "15px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          <Ring percent={takePct || 0} size={50} thickness={6}>
+            <span
+              style={{
+                fontFamily: FONTS.display,
+                fontSize: 12,
+                fontWeight: 700,
+                color: COLORS.brand,
+              }}
+            >
+              {takePct != null ? takePct + "%" : "—"}
+            </span>
+          </Ring>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 12, color: COLORS.inkSoft, margin: 0 }}>
+              Estimated take home after tax
+            </p>
+            <p
+              style={{
+                fontFamily: FONTS.display,
+                fontSize: 19,
+                fontWeight: 700,
+                color: COLORS.ink,
+                margin: "2px 0 0",
+              }}
+            >
+              <s
+                style={{
+                  color: COLORS.label,
+                  fontWeight: 500,
+                  fontSize: 14,
+                  marginRight: 6,
+                }}
+              >
+                {formatMoney(totalEarned)}
+              </s>
+              {formatMoney(takeHome)}
+            </p>
+          </div>
+          <button
+            onClick={onSeeBreakdown}
+            style={{
+              border: "none",
+              background: COLORS.tint,
+              color: COLORS.brand,
+              fontFamily: FONTS.body,
+              fontWeight: 600,
+              fontSize: 12,
+              borderRadius: 11,
+              padding: "9px 13px",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Breakdown
+          </button>
+        </div>
+      )}
+
+      {/* Next up */}
+      <p style={{ ...label, margin: "24px 0 12px" }}>Next up</p>
+      {nextShift ? (
+        <div
+          style={{
+            ...cardStyle,
+            padding: "15px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          <div
+            style={{
+              width: 46,
+              height: 46,
+              flex: "0 0 46px",
+              borderRadius: 14,
+              background: COLORS.tint,
+              color: COLORS.brand,
+              display: "grid",
+              placeItems: "center",
+              fontFamily: FONTS.display,
+              fontWeight: 700,
+              fontSize: 18,
+            }}
+          >
+            {shiftDay}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p
+              style={{
+                fontFamily: FONTS.body,
+                fontWeight: 600,
+                fontSize: 14.5,
+                color: COLORS.ink,
+                margin: 0,
+              }}
+            >
+              {formatDate(nextShift.date)}
+            </p>
+            <p
+              style={{
+                fontFamily: FONTS.body,
+                fontSize: 12.5,
+                color: COLORS.inkSoft,
+                margin: "3px 0 0",
+              }}
+            >
+              {nextShift.start} &rarr; {nextShift.end} &middot;{" "}
+              {nextShift.hours.toFixed(1)}h &middot; {formatRate(nextShift.rate)}/h
+            </p>
+            {nextShift.notes && (
+              <p
+                style={{
+                  fontFamily: FONTS.body,
+                  fontSize: 13,
+                  color: COLORS.ink,
+                  margin: "5px 0 0",
+                }}
+              >
+                {nextShift.notes}
+              </p>
+            )}
+          </div>
+          <p
+            style={{
+              fontFamily: FONTS.display,
+              fontWeight: 700,
+              fontSize: 17,
+              color: COLORS.ink,
+              margin: 0,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {formatMoney(nextShift.earnings)}
+          </p>
+        </div>
       ) : (
-        <p style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.inkSoft }}>
-          No upcoming shifts. Tap + to add one.
-        </p>
+        <div
+          style={{
+            ...cardStyle,
+            padding: "20px 18px",
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: FONTS.body,
+              fontSize: 14,
+              color: COLORS.inkSoft,
+              margin: 0,
+            }}
+          >
+            No upcoming shifts. Tap + to add one.
+          </p>
+        </div>
       )}
     </div>
   );
 }
 
-const labelSmall = {
+const label = {
   fontFamily: FONTS.body,
   fontSize: 11,
   fontWeight: 600,
   letterSpacing: 1.5,
   textTransform: "uppercase",
   color: COLORS.label,
-};
-
-const amountStyle = {
-  fontFamily: FONTS.display,
-  fontWeight: 400,
-  fontSize: "clamp(44px, 13vw, 56px)",
-  lineHeight: 1,
-  letterSpacing: "-0.02em",
-  color: COLORS.ink,
   margin: 0,
 };
 
-const linkStyle = {
-  border: "none",
-  background: "none",
-  padding: 0,
-  color: COLORS.inkSoft,
-  textDecoration: "underline",
-  cursor: "pointer",
-  fontFamily: FONTS.body,
-  fontSize: 13.5,
-};
-
-function Stat({ label, value, border }) {
+function HeroStat({ label: l, value }) {
   return (
-    <div style={{ padding: "14px 4px 16px", borderLeft: border ? `1px solid ${COLORS.line}` : "none" }}>
-      <p style={{ ...labelSmall, fontSize: 10, letterSpacing: 1, marginBottom: 8 }}>{label}</p>
-      <p style={{ fontFamily: FONTS.body, fontSize: 16, fontWeight: 700, color: COLORS.ink, margin: 0 }}>
+    <div>
+      <p
+        style={{
+          fontFamily: FONTS.display,
+          fontSize: 17,
+          fontWeight: 600,
+          color: "#fff",
+          margin: "0 0 2px",
+        }}
+      >
         {value}
+      </p>
+      <p style={{ fontFamily: FONTS.body, fontSize: 11.5, color: "#BFE0D3", margin: 0 }}>
+        {l}
       </p>
     </div>
   );

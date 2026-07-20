@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { Bell } from "lucide-react";
 import { supabase } from "./lib/supabaseClient";
 import AuthScreen from "./components/AuthScreen";
 import PrivacyPolicy from "./components/PrivacyPolicy";
@@ -13,14 +12,23 @@ import TravelTab from "./tabs/TravelTab";
 import ProfileTab from "./tabs/ProfileTab";
 import OnboardingWelcome from "./components/OnboardingWelcome";
 import { estimateTax } from "./utils/taxUtils";
-import { COLORS as UI, FONTS as UIFONT, LogoLockup } from "./theme";
 
-const COLORS = { navy: "#F4F6F3", paper: "#F4F6F3", offwhite: "#5E6B63" };
+const COLORS = { navy: "#efeeec", paper: "#efeeec", offwhite: "#6f6c66" };
 const FONT_MONO = "'Inter', sans-serif";
-const FONT_DISPLAY = "'Space Grotesk', 'Arial Black', sans-serif";
+const FONT_DISPLAY = "'Archivo Black', 'Arial Black', sans-serif";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function ensureFonts() {
+  if (document.getElementById("zc-fonts")) return;
+  const link = document.createElement("link");
+  link.id = "zc-fonts";
+  link.rel = "stylesheet";
+  link.href =
+    "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap";
+  document.head.appendChild(link);
 }
 
 function calcHours(start, end) {
@@ -40,83 +48,6 @@ function Spinner() {
   );
 }
 
-// Sticky top bar with the logo, carried across every screen
-function TopBar({ firstName, onProfile }) {
-  const initial = (firstName || "?").charAt(0).toUpperCase();
-  return (
-    <div
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 30,
-        background: UI.bg,
-        borderBottom: `1px solid ${UI.border}`,
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 560,
-          margin: "0 auto",
-          height: 56,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 20px",
-        }}
-      >
-        <LogoLockup size={26} />
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            style={{
-              position: "relative",
-              width: 38,
-              height: 38,
-              borderRadius: 12,
-              background: UI.card,
-              border: `1px solid ${UI.border}`,
-              display: "grid",
-              placeItems: "center",
-              color: UI.inkSoft,
-            }}
-          >
-            <Bell size={18} strokeWidth={1.9} />
-            <span
-              style={{
-                position: "absolute",
-                top: 8,
-                right: 9,
-                width: 7,
-                height: 7,
-                borderRadius: "50%",
-                background: UI.gold,
-                border: `1.5px solid ${UI.bg}`,
-              }}
-            />
-          </div>
-          <button
-            onClick={onProfile}
-            aria-label="Profile"
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 12,
-              border: "none",
-              cursor: "pointer",
-              background: "linear-gradient(135deg,#0A7B57,#0B3D2E)",
-              color: "#fff",
-              fontFamily: UIFONT.display,
-              fontWeight: 700,
-              fontSize: 14,
-            }}
-          >
-            {initial}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -125,6 +56,7 @@ export default function App() {
   const isPasswordReset = useState(() => window.location.hash.includes("type=recovery"))[0];
 
   useEffect(() => {
+    ensureFonts();
     const handleOnline = () => setOffline(false);
     const handleOffline = () => setOffline(true);
     window.addEventListener("online", handleOnline);
@@ -208,7 +140,6 @@ function MainApp({ session, onShowPrivacy, offline }) {
             travelCost: Number(s.travel_cost || 0),
             workAddress: s.work_address || "",
             distanceKm: s.distance_km ? Number(s.distance_km) : null,
-            employer: s.employer || "",
           }))
         );
       }
@@ -289,21 +220,11 @@ function MainApp({ session, onShowPrivacy, offline }) {
         travel_cost: parseFloat(form.travelCost) || 0,
         work_address: form.workAddress ? form.workAddress.trim() : null,
         distance_km: form.distanceKm || null,
-        employer: form.employer ? form.employer.trim() : null,
       };
       const { error } = editingShift
         ? await supabase.from("shifts").update(row).eq("id", editingShift.id)
         : await supabase.from("shifts").insert(row);
       if (error) throw error;
-
-      // Always remember the employer so it can be reused next time.
-      const empName = row.employer;
-      const empRate = row.rate;
-      if (empName && empRate > 0 && !employers.some((e) => e.name.toLowerCase() === empName.toLowerCase())) {
-        const id = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
-        try { await addEmployer({ id, name: empName, rate: empRate }); } catch (e) { /* non-fatal */ }
-      }
-
       await loadAll();
       closeForm();
     } catch (err) {
@@ -336,13 +257,6 @@ function MainApp({ session, onShowPrivacy, offline }) {
     return error ? error.message : null;
   };
 
-  const employers = profile?.settings?.employers || [];
-  const addEmployer = async (emp) => {
-    const next = [...employers, emp];
-    await saveProfile({ settings: { ...(profile?.settings || {}), employers: next } });
-    return next;
-  };
-
   const today = todayISO();
   const enriched = useMemo(
     () =>
@@ -369,32 +283,17 @@ function MainApp({ session, onShowPrivacy, offline }) {
   const totalTravelCost = enriched.reduce((sum, s) => sum + (s.travelCost || 0), 0);
   const shiftsWithTravel = enriched.filter((s) => s.travelCost > 0).sort((a, b) => (a.date < b.date ? 1 : -1));
 
-  // Employers for the picker: saved list + any employer ever used on a shift
-  // (most recent rate wins for shift-derived ones), deduped by name.
-  const employerOptions = useMemo(() => {
-    const byName = new Map();
-    employers.forEach((e) => byName.set(e.name.toLowerCase(), { ...e }));
-    [...enriched]
-      .filter((s) => s.employer)
-      .sort((a, b) => (a.date < b.date ? 1 : -1)) // most recent first
-      .forEach((s) => {
-        const key = s.employer.toLowerCase();
-        if (!byName.has(key)) byName.set(key, { name: s.employer, rate: s.rate });
-      });
-    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [employers, enriched]);
-
   if (!loaded) return <Spinner />;
 
   if (loadError) {
     return (
-      <div style={{ minHeight: "100vh", background: UI.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
+      <div style={{ minHeight: "100vh", background: COLORS.paper, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
         <div style={{ textAlign: "center", maxWidth: 320 }}>
-          <p style={{ fontFamily: FONT_DISPLAY, fontSize: 22, color: UI.ink, marginBottom: 8 }}>Couldn't load your data</p>
-          <p style={{ color: UI.inkSoft, fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>Check your internet connection and try again.</p>
+          <p style={{ fontFamily: FONT_DISPLAY, fontSize: 20, color: "#1C1A17", marginBottom: 8 }}>Couldn't load your data</p>
+          <p style={{ color: "#6B6558", fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>Check your internet connection and try again.</p>
           <button
             onClick={loadAll}
-            style={{ padding: "11px 26px", borderRadius: 12, border: "none", background: UI.deep, color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600, fontFamily: FONT_MONO }}
+            style={{ padding: "10px 24px", borderRadius: 4, border: "none", background: "#1C1A17", color: "#EDEAE2", cursor: "pointer", fontSize: 14, fontWeight: 600 }}
           >
             Try again
           </button>
@@ -405,8 +304,6 @@ function MainApp({ session, onShowPrivacy, offline }) {
 
   return (
     <div style={{ minHeight: "100vh", background: COLORS.paper, textAlign: "left", fontFamily: "'Inter', -apple-system, sans-serif" }}>
-      <TopBar firstName={profile?.first_name || ""} onProfile={() => setActiveTab("profile")} />
-
       {offline && (
         <div style={{ background: "#C2543F", color: "white", padding: "8px 16px", textAlign: "center", fontSize: 12.5, fontFamily: "'Inter', sans-serif" }}>
           No internet connection. Changes will sync when you're back online.
@@ -457,8 +354,6 @@ function MainApp({ session, onShowPrivacy, offline }) {
           editingShift={editingShift}
           homeAddress={profile?.home_address || ""}
           lastWorkAddress={[...enriched].reverse().find((s) => s.workAddress)?.workAddress || ""}
-          employers={employerOptions}
-          onAddEmployer={addEmployer}
           onSave={handleSave}
           onClose={closeForm}
           saving={saving}

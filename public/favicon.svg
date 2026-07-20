@@ -1,0 +1,15 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="zc-fav-bg" x1="0" y1="100" x2="100" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F5C43" />
+      <stop offset="1" stop-color="#0B3D2E" />
+    </linearGradient>
+    <linearGradient id="zc-fav-ring" x1="20" y1="80" x2="80" y2="20" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5FE3A9" />
+      <stop offset="1" stop-color="#F0C766" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="24" fill="url(#zc-fav-bg)" />
+  <circle cx="50" cy="50" r="30" stroke="rgba(255,255,255,.16)" stroke-width="13" />
+  <circle cx="50" cy="50" r="30" stroke="url(#zc-fav-ring)" stroke-width="13" stroke-linecap="round" stroke-dasharray="147 189" transform="rotate(-90 50 50)" />
+</svg>

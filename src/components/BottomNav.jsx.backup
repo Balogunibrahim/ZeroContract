@@ -1,12 +1,12 @@
-import { Home, List, Wallet, Car, Settings, Plus } from "lucide-react";
+import { Home, CalendarDays, Wallet, Car, User, Plus } from "lucide-react";
 import { COLORS, FONTS } from "../theme";
 
 const TABS = [
   { id: "home", label: "Home", icon: Home },
-  { id: "planner", label: "Shifts", icon: List },
+  { id: "planner", label: "Planner", icon: CalendarDays },
   { id: "money", label: "Money", icon: Wallet },
   { id: "travel", label: "Travel", icon: Car },
-  { id: "profile", label: "Settings", icon: Settings },
+  { id: "profile", label: "Profile", icon: User },
 ];
 
 export default function BottomNav({ active, onChange, onAddShift }) {
@@ -20,13 +20,13 @@ export default function BottomNav({ active, onChange, onAddShift }) {
           style={{
             position: "absolute",
             right: 18,
-            bottom: 84,
+            bottom: 82,
             width: 56,
             height: 56,
-            borderRadius: 18,
-            background: "linear-gradient(135deg,#0A7B57,#0B3D2E)",
+            borderRadius: "50%",
+            background: COLORS.black,
             border: "none",
-            boxShadow: "0 12px 24px -8px rgba(10,123,87,0.55)",
+            boxShadow: "0 6px 18px rgba(0,0,0,0.28)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -42,12 +42,10 @@ export default function BottomNav({ active, onChange, onAddShift }) {
             display: "grid",
             gridTemplateColumns: "repeat(5, 1fr)",
             alignItems: "center",
-            background: "rgba(255,255,255,0.92)",
-            backdropFilter: "blur(18px)",
-            WebkitBackdropFilter: "blur(18px)",
+            background: COLORS.bg,
             borderTop: `1px solid ${COLORS.line}`,
             padding: "8px 10px",
-            paddingBottom: "calc(10px + env(safe-area-inset-bottom, 0px))",
+            paddingBottom: "calc(8px + env(safe-area-inset-bottom, 0px))",
           }}
         >
           {TABS.map((t) => {
@@ -61,37 +59,22 @@ export default function BottomNav({ active, onChange, onAddShift }) {
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: 4,
-                  padding: "4px 0",
-                  border: "none",
+                  gap: 5,
+                  padding: "8px 4px",
+                  border: `1px solid ${isActive ? COLORS.ink : "transparent"}`,
+                  borderRadius: 2,
                   background: "none",
                   cursor: "pointer",
                 }}
               >
-                <div
-                  style={{
-                    width: 46,
-                    height: 30,
-                    borderRadius: 12,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: isActive ? COLORS.tint : "transparent",
-                    transition: "background 0.15s",
-                  }}
-                >
-                  <Icon
-                    size={20}
-                    color={isActive ? COLORS.brand : COLORS.label}
-                    strokeWidth={isActive ? 2.2 : 1.8}
-                  />
-                </div>
+                <Icon size={20} color={isActive ? COLORS.ink : COLORS.label} strokeWidth={isActive ? 2.2 : 1.8} />
                 <span
                   style={{
                     fontFamily: FONTS.body,
-                    fontSize: 10,
-                    letterSpacing: 0.3,
-                    color: isActive ? COLORS.brand : COLORS.label,
+                    fontSize: 9.5,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    color: isActive ? COLORS.ink : COLORS.label,
                     fontWeight: isActive ? 700 : 500,
                   }}
                 >
