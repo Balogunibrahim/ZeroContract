@@ -19,8 +19,8 @@ export default function BottomNav({ active, onChange, onAddShift }) {
           aria-label="Add shift"
           style={{
             position: "absolute",
-            right: 18,
-            bottom: 84,
+            right: "calc(18px + env(safe-area-inset-right, 0px))",
+            bottom: "calc(84px + env(safe-area-inset-bottom, 0px))",
             width: 56,
             height: 56,
             borderRadius: 18,
