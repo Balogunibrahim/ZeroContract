@@ -157,14 +157,22 @@ function AuthShell({ title, subtitle, children }) {
 
 export default function AuthScreen({ onShowPrivacy }) {
   const [mode, setMode] = useState("login");
-  if (mode === "signup") return <SignupForm onSwitch={setMode} onShowPrivacy={onShowPrivacy} />;
-  if (mode === "forgot") return <ForgotForm onSwitch={setMode} />;
-  if (mode === "confirm") return <ConfirmScreen onSwitch={setMode} />;
-  return <LoginForm onSwitch={setMode} onShowPrivacy={onShowPrivacy} />;
+  const [email, setEmail] = useState(""); // shared across login/signup so the address carries over
+  const [notice, setNotice] = useState("");
+
+  const switchTo = (m) => { setNotice(""); setMode(m); };
+  const noAccount = () => {
+    setNotice(`We couldn't find an account for ${email ? email : "that email"}. Create one below — or head back to log in if you already have one.`);
+    setMode("signup");
+  };
+
+  if (mode === "signup") return <SignupForm onSwitch={switchTo} onShowPrivacy={onShowPrivacy} email={email} setEmail={setEmail} notice={notice} />;
+  if (mode === "forgot") return <ForgotForm onSwitch={switchTo} email={email} setEmail={setEmail} />;
+  if (mode === "confirm") return <ConfirmScreen onSwitch={switchTo} />;
+  return <LoginForm onSwitch={switchTo} onShowPrivacy={onShowPrivacy} email={email} setEmail={setEmail} onNoAccount={noAccount} />;
 }
 
-function LoginForm({ onSwitch, onShowPrivacy }) {
-  const [email, setEmail] = useState("");
+function LoginForm({ onSwitch, onShowPrivacy, email, setEmail, onNoAccount }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -177,7 +185,11 @@ function LoginForm({ onSwitch, onShowPrivacy }) {
     if (error) {
       const m = error.message.toLowerCase();
       if (m.includes("invalid login") || m.includes("invalid credentials")) {
-        setError("Email or password is incorrect. Try again or reset your password below.");
+        // No account matched (or wrong password) — send them to Sign up with the
+        // email carried over. If the account actually exists, Sign up will say so.
+        setBusy(false);
+        onNoAccount();
+        return;
       } else if (m.includes("email not confirmed")) {
         setError("You haven't confirmed your email yet. Check your inbox for a confirmation link.");
       } else {
@@ -217,8 +229,7 @@ function LoginForm({ onSwitch, onShowPrivacy }) {
   );
 }
 
-function SignupForm({ onSwitch, onShowPrivacy }) {
-  const [email, setEmail] = useState("");
+function SignupForm({ onSwitch, onShowPrivacy, email, setEmail, notice }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -278,6 +289,12 @@ function SignupForm({ onSwitch, onShowPrivacy }) {
   return (
     <AuthShell title="Create account" subtitle="Start tracking in two minutes">
       <form onSubmit={handleSubmit}>
+        {notice && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, background: COLORS.tint, borderRadius: 12, padding: "12px 14px", marginBottom: 16 }}>
+            <p style={{ fontFamily: FONTS.body, fontSize: 12.5, color: COLORS.deep, margin: 0, lineHeight: 1.5 }}>{notice}</p>
+            <button type="button" onClick={() => onSwitch("login")} style={{ ...linkBtn, alignSelf: "flex-start" }}>← Back to log in</button>
+          </div>
+        )}
         <div style={{ display: "flex", gap: 10, marginBottom: 13 }}>
           <div style={{ flex: 1 }}>
             <label style={flabel}>First name</label>
@@ -336,8 +353,7 @@ function SignupForm({ onSwitch, onShowPrivacy }) {
   );
 }
 
-function ForgotForm({ onSwitch }) {
-  const [email, setEmail] = useState("");
+function ForgotForm({ onSwitch, email, setEmail }) {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [busy, setBusy] = useState(false);
