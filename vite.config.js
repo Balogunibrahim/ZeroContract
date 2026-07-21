@@ -14,8 +14,8 @@ export default defineConfig({
         name: 'Zero Contract',
         short_name: 'ZeroContract',
         description: 'Track your shift earnings and paydays',
-        theme_color: '#15203B',
-        background_color: '#15203B',
+        theme_color: '#0B3D2E',
+        background_color: '#F4F6F3',
         display: 'standalone',
         start_url: '/',
         icons: [
