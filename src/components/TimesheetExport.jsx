@@ -94,12 +94,24 @@ export default function TimesheetExport({ shifts, employers, profile, onClose })
   };
 
   const printPDF = () => {
-    const w = window.open("", "_blank");
-    if (!w) return;
-    w.document.write(buildHTML());
-    w.document.close();
-    w.focus();
-    setTimeout(() => w.print(), 300);
+    // Print via a hidden iframe so the app stays put (no full-screen new tab).
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
+    const cleanup = () => { if (document.body.contains(iframe)) document.body.removeChild(iframe); };
+    iframe.onload = () => {
+      try {
+        const win = iframe.contentWindow;
+        win.focus();
+        win.onafterprint = () => setTimeout(cleanup, 200);
+        win.print();
+        setTimeout(() => { if (document.body.contains(iframe)) cleanup(); }, 60000);
+      } catch (e) {
+        cleanup();
+      }
+    };
+    iframe.srcdoc = buildHTML();
+    document.body.appendChild(iframe);
   };
 
   const downloadCSV = () => {
