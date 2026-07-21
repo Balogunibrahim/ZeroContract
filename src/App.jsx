@@ -446,7 +446,7 @@ function MainApp({ session, onShowPrivacy, offline }) {
         />
       )}
       {activeTab === "planner" && (
-        <PlannerTab future={future} past={past} onEdit={openEditShift} onDelete={handleDelete} onTogglePaid={togglePaid} />
+        <PlannerTab future={future} past={past} onEdit={openEditShift} onDelete={handleDelete} onTogglePaid={togglePaid} employers={employerOptions} profile={profile} />
       )}
       {activeTab === "money" && <MoneyTab profile={profile} taxEstimate={taxEstimate} baselineEarnings={allEarnings} />}
       {activeTab === "travel" && <TravelTab shiftsWithTravel={shiftsWithTravel} totalTravelCost={totalTravelCost} totalEarnings={allEarnings} totalHours={totalHours} />}

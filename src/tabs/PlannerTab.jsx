@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { Trash2, Search, ArrowUpDown, X } from "lucide-react";
+import { Trash2, Search, ArrowUpDown, X, FileText } from "lucide-react";
 import CalendarView from "./CalendarView";
+import TimesheetExport from "../components/TimesheetExport";
 import {
   COLORS,
   FONTS,
@@ -53,13 +54,14 @@ function monthLabel(iso) {
   return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
-export default function PlannerTab({ future, past, onEdit, onDelete, onTogglePaid }) {
+export default function PlannerTab({ future, past, onEdit, onDelete, onTogglePaid, employers, profile }) {
   const [view, setView] = useState("list");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("date");
   const [sortDir, setSortDir] = useState("desc");
   const [group, setGroup] = useState("none");
+  const [showTimesheet, setShowTimesheet] = useState(false);
 
   const allShifts = useMemo(() => [...future, ...past], [future, past]);
   const today = TODAY();
@@ -128,10 +130,25 @@ export default function PlannerTab({ future, past, onEdit, onDelete, onTogglePai
       <ScreenLabel>Shift roster</ScreenLabel>
       <DisplayHeader>Shifts</DisplayHeader>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 18, alignItems: "center" }}>
         <Toggle active={view === "list"} onClick={() => setView("list")}>List</Toggle>
         <Toggle active={view === "calendar"} onClick={() => setView("calendar")}>Calendar</Toggle>
+        <button
+          onClick={() => setShowTimesheet(true)}
+          style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 22, border: `1px solid ${COLORS.border}`, background: COLORS.card, color: COLORS.brand, fontFamily: FONTS.body, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}
+        >
+          <FileText size={14} /> Timesheet
+        </button>
       </div>
+
+      {showTimesheet && (
+        <TimesheetExport
+          shifts={allShifts}
+          employers={employers || []}
+          profile={profile}
+          onClose={() => setShowTimesheet(false)}
+        />
+      )}
 
       {view === "calendar" ? (
         <CalendarView shifts={allShifts} onEdit={onEdit} onDelete={onDelete} />
