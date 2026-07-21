@@ -109,9 +109,6 @@ export default function HomeTab({
         >
           <HeroStat label="Upcoming" value={String(upcomingCount)} />
           <HeroStat label="Unpaid" value={formatMoney(totalUnpaid)} />
-          {takeHome != null && (
-            <HeroStat label="Take home" value={formatMoney(takeHome)} />
-          )}
         </div>
       </div>
 
