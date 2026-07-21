@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { X } from "lucide-react";
+import { X, CalendarPlus } from "lucide-react";
 import { getDistance, estimateTravelCost, attachAutocomplete } from "../utils/mapsUtils";
+import { downloadShiftICS } from "../utils/calendar";
 import { COLORS, FONTS, formatMoney } from "../theme";
 
 const flabel = {
@@ -489,6 +490,36 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
               style={{ resize: "none", minHeight: 64 }}
             />
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (!form.date || !form.start) return;
+              downloadShiftICS(
+                { id: editingShift?.id, date: form.date, start: form.start, end: form.end, hours, rate: parseFloat(form.rate) || 0, notes: form.notes, workAddress: form.workAddress, employer: form.employer },
+                form.employer || "Shift"
+              );
+            }}
+            style={{
+              width: "100%",
+              padding: 13,
+              borderRadius: 14,
+              border: `1px solid ${COLORS.border}`,
+              background: COLORS.tint,
+              color: COLORS.brand,
+              cursor: "pointer",
+              fontFamily: FONTS.body,
+              fontWeight: 600,
+              fontSize: 14,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              marginBottom: 10,
+            }}
+          >
+            <CalendarPlus size={17} /> Add 1-hour reminder to calendar
+          </button>
 
           {saveError && <p style={{ fontFamily: FONTS.body, color: COLORS.danger, fontSize: 13, margin: "0 0 12px" }}>{saveError}</p>}
 
