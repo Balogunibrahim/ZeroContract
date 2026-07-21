@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
-import { Trash2, Search, ArrowUpDown, X, FileText } from "lucide-react";
+import { Trash2, Search, ArrowUpDown, X, FileText, CalendarPlus } from "lucide-react";
 import CalendarView from "./CalendarView";
 import TimesheetExport from "../components/TimesheetExport";
+import { downloadShiftICS } from "../utils/calendar";
 import {
   COLORS,
   FONTS,
@@ -482,13 +483,25 @@ function LedgerRow({ s, onEdit, onDelete, onTogglePaid }) {
         >
           {formatMoney(s.earnings)}
         </p>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(s.id); }}
-          aria-label="Delete shift"
-          style={{ border: "none", background: "none", padding: 8, margin: -8, color: COLORS.label, cursor: "pointer", display: "flex" }}
-        >
-          <Trash2 size={16} />
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {!isPast && (
+            <button
+              onClick={(e) => { e.stopPropagation(); downloadShiftICS(s, s.employer || "Shift"); }}
+              aria-label="Add reminder to calendar"
+              title="Set a 1-hour-before reminder"
+              style={{ border: "none", background: "none", padding: 8, margin: "-8px 0", color: COLORS.brand, cursor: "pointer", display: "flex" }}
+            >
+              <CalendarPlus size={16} />
+            </button>
+          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(s.id); }}
+            aria-label="Delete shift"
+            style={{ border: "none", background: "none", padding: 8, margin: "-8px -8px -8px 0", color: COLORS.label, cursor: "pointer", display: "flex" }}
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );
