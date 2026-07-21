@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, Check } from "lucide-react";
 import { estimateTax } from "../utils/taxUtils";
 import { COLORS, FONTS, formatMoney } from "../theme";
 
@@ -41,7 +41,7 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 function newCandidate() {
-  return { id: uid(), start: "09:00", end: "17:00", rate: "", travelCost: "0" };
+  return { id: uid(), name: "", start: "09:00", end: "17:00", rate: "", travelCost: "0" };
 }
 
 export default function ShiftComparison({ profile, baselineEarnings, onClose }) {
@@ -50,12 +50,12 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
   const region = profile?.tax_region && profile.tax_region !== "skip" ? profile.tax_region : "rest_of_uk";
   const baseIncome = (baselineEarnings || 0) + (profile?.other_income || 0);
 
-  const updateCandidate = (id, field, value) =>
+  const update = (id, field, value) =>
     setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
   const addCandidate = () => setCandidates((prev) => [...prev, newCandidate()]);
   const removeCandidate = (id) => setCandidates((prev) => prev.filter((c) => c.id !== id));
 
-  const results = candidates.map((c) => {
+  const results = candidates.map((c, i) => {
     const hours = calcHours(c.start, c.end);
     const rate = parseFloat(c.rate) || 0;
     const travelCost = parseFloat(c.travelCost) || 0;
@@ -65,96 +65,113 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
     const deduction = Math.max(0, withShift.totalDeductions - withoutShift.totalDeductions);
     const net = gross - deduction - travelCost;
     const netPerHour = hours > 0 ? net / hours : 0;
-    return { ...c, hours, rate, travelCost, gross, deduction, net, netPerHour };
+    return { ...c, index: i, hours, rate, travelCost, gross, deduction, net, netPerHour };
   });
 
-  const validResults = results.filter((r) => r.hours > 0 && r.rate > 0);
-  const sorted = [...validResults].sort((a, b) => b.netPerHour - a.netPerHour);
+  const valid = results.filter((r) => r.hours > 0 && r.rate > 0);
+  const sorted = [...valid].sort((a, b) => b.netPerHour - a.netPerHour);
   const best = sorted[0];
   const second = sorted[1];
-  const bestIndex = best ? candidates.findIndex((c) => c.id === best.id) + 1 : 0;
+
+  const label = (c, i) => (c.name && c.name.trim() ? c.name.trim() : `Offer ${i + 1}`);
 
   return (
     <div style={overlayStyle}>
       <div style={{ background: COLORS.bg, borderRadius: 24, maxWidth: 560, width: "100%", padding: "1.75rem", boxShadow: "0 30px 60px -22px rgba(0,0,0,.5)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <p style={{ fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: COLORS.ink, margin: 0 }}>
-            Compare shifts
-          </p>
-          <button onClick={onClose} aria-label="Close" style={{ ...iconBtn, width: 34, height: 34, borderRadius: 11, border: `1px solid ${COLORS.border}`, background: "#fff", alignItems: "center", justifyContent: "center" }}><X size={16} color={COLORS.inkSoft} /></button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <p style={{ fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: COLORS.ink, margin: 0 }}>Compare shifts</p>
+          <button onClick={onClose} aria-label="Close" style={{ width: 34, height: 34, borderRadius: 11, border: `1px solid ${COLORS.border}`, background: "#fff", display: "grid", placeItems: "center", color: COLORS.inkSoft, cursor: "pointer" }}><X size={16} /></button>
         </div>
-        <p style={{ fontFamily: FONTS.body, fontSize: 13.5, color: COLORS.inkSoft, margin: "0 0 22px", lineHeight: 1.5 }}>
-          Enter two or more offers. We'll show which one actually pays more per hour after tax and travel.
+        <p style={{ fontFamily: FONTS.body, fontSize: 13, color: COLORS.inkSoft, margin: "0 0 20px", lineHeight: 1.55 }}>
+          Enter two offers. We show which one actually pays more per hour once tax and travel are taken off.
         </p>
 
         {candidates.map((c, i) => {
           const r = results.find((res) => res.id === c.id);
           const isBest = best && c.id === best.id && sorted.length > 1;
+          const showResults = r && r.hours > 0 && r.rate > 0;
           return (
             <div
               key={c.id}
               style={{
                 position: "relative",
-                background: COLORS.card,
-                border: `${isBest ? 1.5 : 1}px solid ${isBest ? COLORS.brand : COLORS.border}`,
-                borderRadius: 18,
-                padding: "18px 18px 16px",
+                background: "#fff",
+                border: `1.5px solid ${isBest ? COLORS.brand : COLORS.border}`,
+                borderRadius: 20,
+                padding: "16px 17px",
                 marginBottom: 14,
-                boxShadow: "0 1px 2px rgba(11,61,46,.05)",
+                boxShadow: isBest ? "0 12px 26px -14px rgba(10,123,87,.4)" : "0 1px 2px rgba(11,61,46,.04)",
               }}
             >
               {isBest && (
-                <span style={{ position: "absolute", top: -10, right: 14, background: COLORS.brand, color: "#fff", fontFamily: FONTS.body, fontSize: 9.5, fontWeight: 700, letterSpacing: 1, padding: "5px 10px", borderRadius: 20 }}>
-                  BEST VALUE
-                </span>
+                <span style={{ position: "absolute", top: -10, left: 16, fontSize: 9.5, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", padding: "4px 10px", borderRadius: 8, background: COLORS.brand, color: "#fff" }}>Better deal</span>
               )}
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 14, marginBottom: 16, borderBottom: `1px solid ${COLORS.line}` }}>
-                <span style={{ fontFamily: FONTS.body, fontSize: 18, fontWeight: 700, color: COLORS.ink }}>Shift {i + 1}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <input
+                  aria-label={`Offer ${i + 1} name`}
+                  value={c.name}
+                  onChange={(e) => update(c.id, "name", e.target.value)}
+                  placeholder={`Offer ${i + 1}`}
+                  style={{ ...inputStyle, border: "none", padding: "2px 0", fontFamily: FONTS.display, fontSize: 16, fontWeight: 700, borderRadius: 0 }}
+                />
                 {candidates.length > 1 && (
-                  <button onClick={() => removeCandidate(c.id)} aria-label="Remove shift" style={{ ...iconBtn, padding: 8, margin: -8 }}>
-                    <Trash2 size={15} color={COLORS.label} />
+                  <button onClick={() => removeCandidate(c.id)} aria-label="Remove offer" style={{ border: "none", background: "none", padding: 8, margin: -8, color: COLORS.label, cursor: "pointer", display: "flex", flexShrink: 0 }}>
+                    <Trash2 size={15} />
                   </button>
                 )}
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 20px", marginBottom: 16 }}>
-                <Field label="Start"><input aria-label={`Shift ${i + 1} start time`} type="time" value={c.start} onChange={(e) => updateCandidate(c.id, "start", e.target.value)} style={inputStyle} /></Field>
-                <Field label="End"><input aria-label={`Shift ${i + 1} end time`} type="time" value={c.end} onChange={(e) => updateCandidate(c.id, "end", e.target.value)} style={inputStyle} /></Field>
-                <Field label="Rate £/hr"><input aria-label={`Shift ${i + 1} hourly rate`} type="number" step="0.01" placeholder="12.50" value={c.rate} onChange={(e) => updateCandidate(c.id, "rate", e.target.value)} style={inputStyle} /></Field>
-                <Field label="Travel £"><input aria-label={`Shift ${i + 1} travel cost`} type="number" step="0.01" placeholder="0" value={c.travelCost} onChange={(e) => updateCandidate(c.id, "travelCost", e.target.value)} style={inputStyle} /></Field>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 12px" }}>
+                <Field label="Start"><input aria-label={`Offer ${i + 1} start`} type="time" value={c.start} onChange={(e) => update(c.id, "start", e.target.value)} style={inputStyle} /></Field>
+                <Field label="End"><input aria-label={`Offer ${i + 1} end`} type="time" value={c.end} onChange={(e) => update(c.id, "end", e.target.value)} style={inputStyle} /></Field>
+                <Field label="Rate £/hr"><input aria-label={`Offer ${i + 1} rate`} type="number" step="0.01" placeholder="12.50" value={c.rate} onChange={(e) => update(c.id, "rate", e.target.value)} style={inputStyle} /></Field>
+                <Field label="Travel £"><input aria-label={`Offer ${i + 1} travel`} type="number" step="0.01" placeholder="0" value={c.travelCost} onChange={(e) => update(c.id, "travelCost", e.target.value)} style={inputStyle} /></Field>
               </div>
 
-              {r && r.hours > 0 && r.rate > 0 && (
-                <div style={{ borderTop: `1px dashed ${COLORS.line}`, paddingTop: 14, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px 10px" }}>
-                  <MiniStat label="Hours" value={r.hours.toFixed(1)} />
-                  <MiniStat label="Gross" value={formatMoney(r.gross)} />
-                  <MiniStat label="Tax + NI" value={`−${formatMoney(r.deduction)}`} muted />
-                  <MiniStat label="Travel" value={`−${formatMoney(r.travelCost)}`} muted />
-                  <MiniStat label="Net" value={formatMoney(r.net)} strong />
-                  <MiniStat label="Net / hr" value={formatMoney(r.netPerHour)} strong />
-                </div>
+              {showResults && (
+                <>
+                  <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginTop: 16, paddingTop: 14, borderTop: `1px dashed ${COLORS.line}` }}>
+                    <span style={{ fontSize: 12, color: COLORS.inkSoft }}>{r.hours.toFixed(1)}h shift</span>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontFamily: FONTS.display, fontSize: 12, color: COLORS.label, textDecoration: "line-through" }}>{formatMoney(r.rate)}/h</div>
+                      <div style={{ fontFamily: FONTS.display, fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1, color: COLORS.ink }}>{formatMoney(r.netPerHour)}</div>
+                      <div style={{ fontSize: 10, color: COLORS.inkSoft, textTransform: "uppercase", letterSpacing: 0.5, marginTop: 2 }}>real / hr</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginTop: 14 }}>
+                    <MiniStat label="Gross" value={formatMoney(r.gross)} />
+                    <MiniStat label="Tax+NI" value={`−${formatMoney(r.deduction)}`} red />
+                    <MiniStat label="Travel" value={`−${formatMoney(r.travelCost)}`} red />
+                    <MiniStat label="Net" value={formatMoney(r.net)} green />
+                  </div>
+                </>
               )}
             </div>
           );
         })}
 
-        <button onClick={addCandidate} style={addBtn}>
-          <Plus size={15} /> Add another shift
-        </button>
-
         {best && second && (
-          <div style={{ background: "linear-gradient(150deg,#0B4835,#0B3D2E 75%,#092b21)", borderRadius: 18, padding: "16px 18px", marginTop: 20 }}>
-            <p style={{ fontFamily: FONTS.body, fontSize: 10, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: "#9FD0BE", margin: "0 0 8px" }}>
-              Verdict
-            </p>
-            <p style={{ fontFamily: FONTS.body, fontSize: 14.5, color: "#fff", margin: 0, lineHeight: 1.5 }}>
-              <strong>Shift {bestIndex}</strong> pays you {formatMoney(Math.max(0, best.netPerHour - second.netPerHour))} more per hour after tax and travel.
-            </p>
+          <div style={{ background: "linear-gradient(135deg,#0A7B57,#0B3D2E)", borderRadius: 20, padding: "18px 20px", color: "#fff", display: "flex", alignItems: "center", gap: 14, marginTop: 4 }}>
+            <span style={{ width: 42, height: 42, flex: "0 0 42px", borderRadius: "50%", background: "rgba(255,255,255,.16)", display: "grid", placeItems: "center" }}>
+              <Check size={22} strokeWidth={2.5} />
+            </span>
+            <div>
+              <b style={{ fontFamily: FONTS.display, fontSize: 15, fontWeight: 700, display: "block" }}>
+                {label(best, best.index)} wins by {formatMoney(Math.max(0, best.netPerHour - second.netPerHour))}/hr
+              </b>
+              <span style={{ fontSize: 12, color: "#BFE0D3", display: "block", marginTop: 2, lineHeight: 1.4 }}>
+                After tax and travel, it leaves more in your pocket for every hour worked.
+              </span>
+            </div>
           </div>
         )}
 
-        <p style={{ fontFamily: FONTS.body, fontSize: 11.5, color: COLORS.label, marginTop: 16, lineHeight: 1.5 }}>
+        <button onClick={addCandidate} style={addBtn}>
+          <Plus size={15} /> Add another offer
+        </button>
+
+        <p style={{ fontFamily: FONTS.body, fontSize: 11.5, color: COLORS.label, marginTop: 14, lineHeight: 1.5 }}>
           Tax is estimated on top of what you've already logged this year. Rough estimate, not financial advice.
         </p>
       </div>
@@ -165,7 +182,7 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
 const overlayStyle = {
   position: "fixed",
   inset: 0,
-  background: "rgba(20,20,20,0.6)",
+  background: "rgba(11,33,25,0.55)",
   zIndex: 50,
   display: "flex",
   justifyContent: "center",
@@ -175,23 +192,22 @@ const overlayStyle = {
   fontFamily: FONTS.body,
 };
 
-const iconBtn = { border: "none", background: "none", cursor: "pointer", padding: 4, display: "flex" };
-
 const addBtn = {
   width: "100%",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   gap: 7,
-  padding: "15px",
-  background: COLORS.tint,
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: 14,
+  padding: "14px",
+  background: "none",
+  border: `1.5px dashed ${COLORS.border}`,
+  borderRadius: 16,
   color: COLORS.brand,
   fontFamily: FONTS.body,
   fontSize: 13,
   fontWeight: 600,
   cursor: "pointer",
+  marginTop: 14,
 };
 
 function Field({ label, children }) {
@@ -203,11 +219,11 @@ function Field({ label, children }) {
   );
 }
 
-function MiniStat({ label, value, muted, strong }) {
+function MiniStat({ label, value, red, green }) {
   return (
-    <div>
-      <p style={{ fontFamily: FONTS.body, fontSize: 9.5, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", color: COLORS.label, margin: "0 0 3px" }}>{label}</p>
-      <p style={{ fontFamily: FONTS.body, fontSize: 14, fontWeight: strong ? 700 : 500, color: muted ? COLORS.inkSoft : COLORS.ink, margin: 0 }}>{value}</p>
+    <div style={{ textAlign: "center" }}>
+      <p style={{ fontFamily: FONTS.body, fontSize: 9, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", color: COLORS.label, margin: "0 0 3px" }}>{label}</p>
+      <p style={{ fontFamily: FONTS.display, fontSize: 13, fontWeight: 600, color: red ? COLORS.danger : green ? COLORS.brand : COLORS.ink, margin: 0, whiteSpace: "nowrap" }}>{value}</p>
     </div>
   );
 }

@@ -211,6 +211,7 @@ function MainApp({ session, onShowPrivacy, offline }) {
             workAddress: s.work_address || "",
             distanceKm: s.distance_km ? Number(s.distance_km) : null,
             employer: s.employer || "",
+            travelMode: s.travel_mode || null,
           }))
         );
       }
@@ -306,6 +307,7 @@ function MainApp({ session, onShowPrivacy, offline }) {
         work_address: form.workAddress ? form.workAddress.trim() : null,
         distance_km: form.distanceKm || null,
         employer: form.employer ? form.employer.trim() : null,
+        travel_mode: form.travelMode || null,
       };
       const { error } = editingShift
         ? await supabase.from("shifts").update(row).eq("id", editingShift.id)
@@ -383,6 +385,7 @@ function MainApp({ session, onShowPrivacy, offline }) {
       : null;
   const nextShift = future.length > 0 ? future[0] : null;
   const totalTravelCost = enriched.reduce((sum, s) => sum + (s.travelCost || 0), 0);
+  const totalHours = enriched.reduce((sum, s) => sum + (s.hours || 0), 0);
   const shiftsWithTravel = enriched.filter((s) => s.travelCost > 0).sort((a, b) => (a.date < b.date ? 1 : -1));
 
   // Employers for the picker: saved list + any employer ever used on a shift
@@ -446,7 +449,7 @@ function MainApp({ session, onShowPrivacy, offline }) {
         <PlannerTab future={future} past={past} onEdit={openEditShift} onDelete={handleDelete} onTogglePaid={togglePaid} />
       )}
       {activeTab === "money" && <MoneyTab profile={profile} taxEstimate={taxEstimate} baselineEarnings={allEarnings} />}
-      {activeTab === "travel" && <TravelTab shiftsWithTravel={shiftsWithTravel} totalTravelCost={totalTravelCost} />}
+      {activeTab === "travel" && <TravelTab shiftsWithTravel={shiftsWithTravel} totalTravelCost={totalTravelCost} totalEarnings={allEarnings} totalHours={totalHours} />}
       {activeTab === "profile" && (
         <ProfileTab
           profile={profile}

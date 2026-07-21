@@ -185,10 +185,24 @@ function LoginForm({ onSwitch, onShowPrivacy, email, setEmail, onNoAccount }) {
     if (error) {
       const m = error.message.toLowerCase();
       if (m.includes("invalid login") || m.includes("invalid credentials")) {
-        // No account matched (or wrong password) — send them to Sign up with the
-        // email carried over. If the account actually exists, Sign up will say so.
+        // Supabase returns the same error for "no account" and "wrong password".
+        // Check whether the email is registered: if it is, it's a wrong password
+        // (stay here); if not, send them to Sign up with the email carried over.
+        let registered = null;
+        try {
+          const { data } = await supabase.rpc("email_exists", { p_email: email });
+          registered = data;
+        } catch (rpcErr) {
+          registered = null;
+        }
         setBusy(false);
-        onNoAccount();
+        if (registered) {
+          setError("That password isn't right. Try again, or reset it below.");
+        } else if (registered === false) {
+          onNoAccount();
+        } else {
+          setError("Email or password is incorrect. Try again or reset your password below.");
+        }
         return;
       } else if (m.includes("email not confirmed")) {
         setError("You haven't confirmed your email yet. Check your inbox for a confirmation link.");
