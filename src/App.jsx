@@ -12,6 +12,7 @@ import MoneyTab from "./tabs/MoneyTab";
 import TravelTab from "./tabs/TravelTab";
 import ProfileTab from "./tabs/ProfileTab";
 import OnboardingWelcome from "./components/OnboardingWelcome";
+import IntroSplash from "./components/IntroSplash";
 import { estimateTax } from "./utils/taxUtils";
 import { COLORS as UI, FONTS as UIFONT, LogoLockup, applyTheme, setCurrency } from "./theme";
 
@@ -125,6 +126,12 @@ export default function App() {
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [offline, setOffline] = useState(!navigator.onLine);
   const isPasswordReset = useState(() => window.location.hash.includes("type=recovery"))[0];
+  const [introDone, setIntroDone] = useState(() => {
+    try { return sessionStorage.getItem("zc_intro") === "1"; } catch { return true; }
+  });
+  const intro = !introDone ? (
+    <IntroSplash onDone={() => { try { sessionStorage.setItem("zc_intro", "1"); } catch { /* ignore */ } setIntroDone(true); }} />
+  ) : null;
 
   useEffect(() => {
     const handleOnline = () => setOffline(false);
@@ -151,11 +158,12 @@ export default function App() {
     };
   }, []);
 
-  if (authLoading) return <Spinner />;
+  if (authLoading) return <>{intro}<Spinner /></>;
 
   if (isPasswordReset && session) {
     return (
       <>
+        {intro}
         {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
         <ResetPassword onDone={() => window.history.replaceState(null, "", window.location.pathname)} />
       </>
@@ -164,6 +172,7 @@ export default function App() {
 
   return (
     <>
+      {intro}
       {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
       {!session ? (
         <AuthScreen onShowPrivacy={() => setShowPrivacy(true)} />
