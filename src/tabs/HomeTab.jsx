@@ -59,9 +59,6 @@ export default function HomeTab({
         {firstName ? `Hi, ${firstName}` : "Your ledger"}
       </h2>
 
-      {/* Today's weather + outfit tip */}
-      <WeatherCard homeAddress={homeAddress} />
-
       {/* Earnings hero */}
       <div
         style={{
@@ -270,6 +267,11 @@ export default function HomeTab({
           </button>
         </div>
       )}
+
+      {/* Today's weather + outfit tip */}
+      <div style={{ marginTop: 14 }}>
+        <WeatherCard homeAddress={homeAddress} />
+      </div>
 
       {/* Next up */}
       <p style={{ ...label, margin: "24px 0 12px" }}>Next up</p>
