@@ -375,13 +375,41 @@ function MainApp({ session, onShowPrivacy, offline }) {
   };
 
   const saveProfile = async (updates) => {
+    // Update only the changed columns. An upsert would try to INSERT a row whose
+    // NOT-NULL columns (first_name) aren't in `updates`, which Postgres rejects
+    // even when the row already exists — so use a plain UPDATE here.
     const { data, error } = await supabase
       .from("profiles")
-      .upsert({ id: session.user.id, ...updates })
+      .update(updates)
+      .eq("id", session.user.id)
+      .select()
+      .maybeSingle();
+
+    if (data) {
+      setProfile(data);
+      return null;
+    }
+    if (error) return error.message;
+
+    // No row existed yet — create one with the required fields, then the updates.
+    const meta = session.user.user_metadata || {};
+    const fullName = (meta.full_name || meta.name || "").trim();
+    const first = (fullName.split(/\s+/)[0]) || (session.user.email ? session.user.email.split("@")[0] : "there");
+    const { data: created, error: insErr } = await supabase
+      .from("profiles")
+      .insert({
+        id: session.user.id,
+        first_name: first,
+        last_name: "",
+        profession: "",
+        privacy_consent: true,
+        privacy_consent_at: new Date().toISOString(),
+        ...updates,
+      })
       .select()
       .single();
-    if (data) setProfile(data);
-    return error ? error.message : null;
+    if (created) setProfile(created);
+    return insErr ? insErr.message : null;
   };
 
   const employers = profile?.settings?.employers || [];
