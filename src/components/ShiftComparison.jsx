@@ -21,7 +21,7 @@ const inputStyle = {
   boxSizing: "border-box",
   border: `1px solid ${COLORS.border}`,
   borderRadius: 12,
-  background: "#fff",
+  background: COLORS.card,
   fontFamily: FONTS.body,
   fontSize: 15,
   fontWeight: 600,
@@ -132,7 +132,7 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
       <div style={{ background: COLORS.bg, borderRadius: 24, maxWidth: 560, width: "100%", padding: "1.75rem", boxShadow: "0 30px 60px -22px rgba(0,0,0,.5)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <p style={{ fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: COLORS.ink, margin: 0 }}>Compare shifts</p>
-          <button onClick={onClose} aria-label="Close" style={{ width: 34, height: 34, borderRadius: 11, border: `1px solid ${COLORS.border}`, background: "#fff", display: "grid", placeItems: "center", color: COLORS.inkSoft, cursor: "pointer" }}><X size={16} /></button>
+          <button onClick={onClose} aria-label="Close" style={{ width: 34, height: 34, borderRadius: 11, border: `1px solid ${COLORS.border}`, background: COLORS.card, display: "grid", placeItems: "center", color: COLORS.inkSoft, cursor: "pointer" }}><X size={16} /></button>
         </div>
         <p style={{ fontFamily: FONTS.body, fontSize: 13, color: COLORS.inkSoft, margin: "0 0 20px", lineHeight: 1.55 }}>
           Enter two offers with their addresses. We work out the distance from home and show which one actually pays more per hour once tax and travel are taken off.
@@ -147,7 +147,7 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
               key={c.id}
               style={{
                 position: "relative",
-                background: "#fff",
+                background: COLORS.card,
                 border: `1.5px solid ${isBest ? COLORS.brand : COLORS.border}`,
                 borderRadius: 20,
                 padding: "16px 17px",
@@ -210,7 +210,7 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
                         key={m.id}
                         type="button"
                         onClick={() => update(c.id, { travelMode: m.id })}
-                        style={{ flex: 1, padding: "7px 0", borderRadius: 10, border: on ? "1px solid transparent" : `1px solid ${COLORS.border}`, background: on ? COLORS.deep : "#fff", color: on ? "#fff" : COLORS.inkSoft, fontSize: 11.5, fontWeight: 600, fontFamily: FONTS.body, cursor: "pointer" }}
+                        style={{ flex: 1, padding: "7px 0", borderRadius: 10, border: on ? "1px solid transparent" : `1px solid ${COLORS.border}`, background: on ? COLORS.deep : COLORS.card, color: on ? "#fff" : COLORS.inkSoft, fontSize: 11.5, fontWeight: 600, fontFamily: FONTS.body, cursor: "pointer" }}
                       >
                         {m.label}
                       </button>

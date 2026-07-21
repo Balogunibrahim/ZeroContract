@@ -42,7 +42,7 @@ export default function BottomNav({ active, onChange, onAddShift }) {
             display: "grid",
             gridTemplateColumns: "repeat(5, 1fr)",
             alignItems: "center",
-            background: "rgba(255,255,255,0.92)",
+            background: "var(--zc-nav)",
             backdropFilter: "blur(18px)",
             WebkitBackdropFilter: "blur(18px)",
             borderTop: `1px solid ${COLORS.line}`,

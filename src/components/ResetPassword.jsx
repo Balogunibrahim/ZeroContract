@@ -21,7 +21,7 @@ const inp = {
   boxSizing: "border-box",
   border: `1px solid ${COLORS.border}`,
   borderRadius: 12,
-  background: "#fff",
+  background: COLORS.card,
   fontFamily: FONTS.body,
   fontSize: 14,
   color: COLORS.ink,

@@ -13,7 +13,7 @@ import TravelTab from "./tabs/TravelTab";
 import ProfileTab from "./tabs/ProfileTab";
 import OnboardingWelcome from "./components/OnboardingWelcome";
 import { estimateTax } from "./utils/taxUtils";
-import { COLORS as UI, FONTS as UIFONT, LogoLockup } from "./theme";
+import { COLORS as UI, FONTS as UIFONT, LogoLockup, applyTheme, setCurrency } from "./theme";
 
 const COLORS = { navy: "#F4F6F3", paper: "#F4F6F3", offwhite: "#5E6B63" };
 const FONT_MONO = "'Inter', sans-serif";
@@ -187,6 +187,20 @@ function MainApp({ session, onShowPrivacy, offline }) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [idleWarning, setIdleWarning] = useState(false);
   const resetIdle = useRef(() => {});
+
+  // Apply theme + currency preferences (from profile.settings).
+  const themePref = profile?.settings?.theme || "system";
+  const currencyPref = profile?.settings?.currency || "GBP";
+  setCurrency(currencyPref);
+  useEffect(() => {
+    applyTheme(themePref);
+    if (themePref === "system" && window.matchMedia) {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      const onChange = () => applyTheme("system");
+      mq.addEventListener?.("change", onChange);
+      return () => mq.removeEventListener?.("change", onChange);
+    }
+  }, [themePref]);
 
   // Auto sign-out after 30 minutes of inactivity, with a 1-minute warning.
   useEffect(() => {

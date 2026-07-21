@@ -3,25 +3,41 @@
 //  Change a colour or font here and it updates the whole app.
 // ============================================================
 
+// Colours resolve to CSS variables (defined in index.css) so the whole app can
+// switch between light and dark. Neutrals (bg/card/ink/…) flip; the green and
+// gold brand accents stay the same in both modes.
 export const COLORS = {
-  bg: "#F4F6F3",       // cool paper app background
-  ink: "#16211C",      // deep green-black main text
-  inkSoft: "#5E6B63",  // grey secondary text
-  label: "#93A099",    // muted taupe for small UPPERCASE labels
-  card: "#FFFFFF",     // white cards
-  border: "#E5EAE6",   // thin card borders
-  line: "#E5EAE6",     // dividers
-  black: "#0B3D2E",    // deep forest (solid dark cards / chips)
-  navy: "#0A7B57",     // emerald accent (calendar etc.)
-  danger: "#CE5638",   // unpaid / log out
-
-  // --- new brand tokens ---
-  brand: "#0A7B57",    // primary emerald
-  deep: "#0B3D2E",     // dark forest
-  gold: "#E0A02B",     // payday / positive highlight
-  tint: "#E6F2EC",     // soft emerald tint
-  goldTint: "#FBF1DC", // soft gold tint
+  bg: "var(--zc-bg)",
+  ink: "var(--zc-ink)",
+  inkSoft: "var(--zc-inkSoft)",
+  label: "var(--zc-label)",
+  card: "var(--zc-card)",
+  border: "var(--zc-border)",
+  line: "var(--zc-line)",
+  black: "var(--zc-black)",
+  navy: "var(--zc-navy)",
+  danger: "var(--zc-danger)",
+  brand: "var(--zc-brand)",
+  deep: "var(--zc-deep)",
+  gold: "var(--zc-gold)",
+  tint: "var(--zc-tint)",
+  goldTint: "var(--zc-goldTint)",
 };
+
+// ---- Theme + currency runtime state -----------------------
+export function applyTheme(pref) {
+  const dark = pref === "dark" || (pref === "system" && typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  if (typeof document !== "undefined") document.documentElement.dataset.theme = dark ? "dark" : "light";
+}
+
+const CURRENCY_SYMBOLS = { GBP: "£", EUR: "€", USD: "$" };
+let ACTIVE_CURRENCY = "GBP";
+export function setCurrency(code) {
+  if (CURRENCY_SYMBOLS[code]) ACTIVE_CURRENCY = code;
+}
+export function currencySymbol() {
+  return CURRENCY_SYMBOLS[ACTIVE_CURRENCY] || "£";
+}
 
 export const FONTS = {
   // Characterful grotesk for titles and all the big numbers
@@ -54,13 +70,13 @@ export const cardStyle = {
 export function formatMoney(n) {
   return (Number(n) || 0).toLocaleString(undefined, {
     style: "currency",
-    currency: "GBP",
+    currency: ACTIVE_CURRENCY,
   });
 }
 
 // £15/h style — trims trailing zeros (15, 13.75, 12.5)
 export function formatRate(rate) {
-  return "£" + (Number(rate) || 0);
+  return currencySymbol() + (Number(rate) || 0);
 }
 
 export function formatDate(iso, opts) {

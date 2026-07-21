@@ -60,7 +60,7 @@ export default function MoneyTab({ profile, taxEstimate, baselineEarnings }) {
                 You keep <span style={{ color: COLORS.brand }}>{keepPct}p</span> of every £1
               </span>
               {regionLabel && (
-                <span style={{ fontSize: 10.5, fontWeight: 600, color: COLORS.inkSoft, background: "#EEF2EF", padding: "5px 10px", borderRadius: 8, whiteSpace: "nowrap" }}>{regionLabel}</span>
+                <span style={{ fontSize: 10.5, fontWeight: 600, color: COLORS.inkSoft, background: "var(--zc-subtle)", padding: "5px 10px", borderRadius: 8, whiteSpace: "nowrap" }}>{regionLabel}</span>
               )}
             </div>
           )}
@@ -68,7 +68,7 @@ export default function MoneyTab({ profile, taxEstimate, baselineEarnings }) {
           {/* Where it went — stacked bar */}
           <SectionLabel>Where your £{Math.round(gross).toLocaleString()} went</SectionLabel>
           <div style={{ ...cardStyle, borderRadius: 20, padding: "18px 20px" }}>
-            <div style={{ height: 16, borderRadius: 8, overflow: "hidden", display: "flex", margin: "4px 0 14px", background: "#EEF2EF" }}>
+            <div style={{ height: 16, borderRadius: 8, overflow: "hidden", display: "flex", margin: "4px 0 14px", background: "var(--zc-subtle)" }}>
               <span style={{ height: "100%", width: `${pct(takeHome)}%`, background: COLORS.brand }} />
               <span style={{ height: "100%", width: `${pct(incomeTax)}%`, background: COLORS.danger }} />
               <span style={{ height: "100%", width: `${pct(ni)}%`, background: COLORS.gold }} />

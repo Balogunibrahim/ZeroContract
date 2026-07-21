@@ -7,7 +7,7 @@ const SHELL_BG = "radial-gradient(120% 70% at 50% 0%,#123f30,#0d2c22 60%,#0a211a
 
 const STYLE = `
   .zc-inp{width:100%;padding:11px 13px;border:1px solid ${COLORS.border};border-radius:12px;
-    background:#fff;font-family:'Inter',sans-serif;font-size:14px;color:${COLORS.ink};outline:none;
+    background:var(--zc-card);font-family:'Inter',sans-serif;font-size:14px;color:${COLORS.ink};outline:none;
     box-sizing:border-box;transition:border-color .15s,box-shadow .15s}
   .zc-inp:focus{border-color:${COLORS.brand};box-shadow:0 0 0 3px rgba(10,123,87,.12)}
   .zc-inp::placeholder{color:#B7C0BA}

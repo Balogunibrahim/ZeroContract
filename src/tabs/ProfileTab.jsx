@@ -299,7 +299,7 @@ function Switch({ on, onClick, disabled }) {
         flexShrink: 0,
       }}
     >
-      <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#fff", transform: on ? "translateX(20px)" : "translateX(0)", transition: "transform 150ms", boxShadow: "0 1px 2px rgba(0,0,0,.25)" }} />
+      <span style={{ width: 22, height: 22, borderRadius: "50%", background: COLORS.card, transform: on ? "translateX(20px)" : "translateX(0)", transition: "transform 150ms", boxShadow: "0 1px 2px rgba(0,0,0,.25)" }} />
     </button>
   );
 }

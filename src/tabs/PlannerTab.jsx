@@ -33,10 +33,10 @@ const GROUPS = [
   { id: "month", label: "Month" },
 ];
 
-// ISO date -> Monday of that week (ISO string)
-function weekStartISO(iso) {
+// ISO date -> start of that week (ISO string), honouring week-start pref
+function weekStartISO(iso, weekStart) {
   const d = new Date(iso + "T00:00:00");
-  const day = (d.getDay() + 6) % 7; // Mon = 0
+  const day = weekStart === "Sun" ? d.getDay() : (d.getDay() + 6) % 7;
   d.setDate(d.getDate() - day);
   return d.toISOString().slice(0, 10);
 }
@@ -55,6 +55,7 @@ function monthLabel(iso) {
 }
 
 export default function PlannerTab({ future, past, onEdit, onDelete, onTogglePaid, employers, profile }) {
+  const weekStart = profile?.settings?.weekStart || "Mon";
   const [view, setView] = useState("list");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -111,7 +112,7 @@ export default function PlannerTab({ future, past, onEdit, onDelete, onTogglePai
     if (group === "none") return [{ key: "all", label: null, shifts: sorted }];
     const map = new Map();
     for (const s of sorted) {
-      const key = group === "week" ? weekStartISO(s.date) : s.date.slice(0, 7) + "-01";
+      const key = group === "week" ? weekStartISO(s.date, weekStart) : s.date.slice(0, 7) + "-01";
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(s);
     }
@@ -123,7 +124,7 @@ export default function PlannerTab({ future, past, onEdit, onDelete, onTogglePai
       subtotal: map.get(key).reduce((sum, s) => sum + s.earnings, 0),
       subhours: map.get(key).reduce((sum, s) => sum + s.hours, 0),
     }));
-  }, [sorted, group, sortDir]);
+  }, [sorted, group, sortDir, weekStart]);
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.5rem 1.25rem calc(6rem + env(safe-area-inset-bottom, 0px))" }}>
@@ -151,7 +152,7 @@ export default function PlannerTab({ future, past, onEdit, onDelete, onTogglePai
       )}
 
       {view === "calendar" ? (
-        <CalendarView shifts={allShifts} onEdit={onEdit} onDelete={onDelete} />
+        <CalendarView shifts={allShifts} onEdit={onEdit} onDelete={onDelete} weekStart={weekStart} />
       ) : (
         <>
           {/* Search */}

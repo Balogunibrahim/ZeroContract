@@ -6,7 +6,8 @@ const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
-const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
+const DAY_LETTERS_MON = ["M", "T", "W", "T", "F", "S", "S"];
+const DAY_LETTERS_SUN = ["S", "M", "T", "W", "T", "F", "S"];
 const GOLD_TEXT = "#B07C1C"; // readable gold for payday numbers
 
 function pad(n) {
@@ -14,9 +15,9 @@ function pad(n) {
 }
 
 // Full 6-week grid, including greyed overflow days from adjacent months.
-function getMonthGrid(year, month) {
+function getMonthGrid(year, month, weekStart) {
   const firstOfMonth = new Date(year, month, 1);
-  const startWeekday = (firstOfMonth.getDay() + 6) % 7; // 0 = Monday
+  const startWeekday = weekStart === "Sun" ? firstOfMonth.getDay() : (firstOfMonth.getDay() + 6) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrev = new Date(year, month, 0).getDate();
 
@@ -47,12 +48,13 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default function CalendarView({ shifts, onEdit, onDelete }) {
+export default function CalendarView({ shifts, onEdit, onDelete, weekStart = "Mon" }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [payoutOpen, setPayoutOpen] = useState(false);
+  const DAY_LETTERS = weekStart === "Sun" ? DAY_LETTERS_SUN : DAY_LETTERS_MON;
 
   // shifts worked on a day, and payouts landing on a day
   const byDate = {};
@@ -62,7 +64,7 @@ export default function CalendarView({ shifts, onEdit, onDelete }) {
     if (s.payday) (byPayday[s.payday] = byPayday[s.payday] || []).push(s);
   });
 
-  const cells = getMonthGrid(year, month);
+  const cells = getMonthGrid(year, month, weekStart);
   const today = todayISO();
 
   const goPrev = () => {

@@ -5,8 +5,43 @@
    ============================================================ */
 
 :root {
-  --bg: #f4f6f3;
-  --ink: #16211c;
+  /* Zero Contract palette — light (default). Neutrals flip in dark mode below;
+     brand green + gold accents stay the same in both. */
+  --zc-bg: #f4f6f3;
+  --zc-ink: #16211c;
+  --zc-inkSoft: #5e6b63;
+  --zc-label: #93a099;
+  --zc-card: #ffffff;
+  --zc-border: #e5eae6;
+  --zc-line: #e5eae6;
+  --zc-danger: #ce5638;
+  --zc-black: #0b3d2e;
+  --zc-navy: #0a7b57;
+  --zc-brand: #0a7b57;
+  --zc-deep: #0b3d2e;
+  --zc-gold: #e0a02b;
+  --zc-tint: #e6f2ec;
+  --zc-goldTint: #fbf1dc;
+  --zc-subtle: #eef2ef;
+  --zc-nav: rgba(255, 255, 255, 0.92);
+}
+
+:root[data-theme="dark"] {
+  --zc-bg: #0f1512;
+  --zc-ink: #ecf2ed;
+  --zc-inkSoft: #a3b4aa;
+  --zc-label: #6f8177;
+  --zc-card: #1a241f;
+  --zc-border: #2a362f;
+  --zc-line: #2a362f;
+  --zc-danger: #e4785c;
+  --zc-subtle: #23302a;
+  --zc-nav: rgba(20, 28, 24, 0.92);
+}
+
+:root {
+  --bg: var(--zc-bg);
+  --ink: var(--zc-ink);
   --brand: #0a7b57;
   --deep: #0b3d2e;
 

@@ -135,7 +135,7 @@ export default function TimesheetExport({ shifts, employers, profile, onClose })
       <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.bg, borderRadius: 24, maxWidth: 460, width: "100%", padding: "1.5rem", boxShadow: "0 30px 60px -22px rgba(0,0,0,.5)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <p style={{ fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: COLORS.ink, margin: 0 }}>Export timesheet</p>
-          <button onClick={onClose} aria-label="Close" style={{ width: 34, height: 34, borderRadius: 11, border: `1px solid ${COLORS.border}`, background: "#fff", display: "grid", placeItems: "center", color: COLORS.inkSoft, cursor: "pointer" }}><X size={16} /></button>
+          <button onClick={onClose} aria-label="Close" style={{ width: 34, height: 34, borderRadius: 11, border: `1px solid ${COLORS.border}`, background: COLORS.card, display: "grid", placeItems: "center", color: COLORS.inkSoft, cursor: "pointer" }}><X size={16} /></button>
         </div>
         <p style={{ fontSize: 13, color: COLORS.inkSoft, margin: "0 0 18px", lineHeight: 1.5 }}>Pick an employer and period, then save a PDF or CSV to claim your pay.</p>
 
@@ -157,7 +157,7 @@ export default function TimesheetExport({ shifts, employers, profile, onClose })
               ))}
             </div>
 
-            <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", border: `1px solid ${COLORS.border}`, borderRadius: 13, padding: "12px 15px", marginBottom: 16, cursor: "pointer" }}>
+            <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 13, padding: "12px 15px", marginBottom: 16, cursor: "pointer" }}>
               <span style={{ fontSize: 14, color: COLORS.ink }}>Unpaid shifts only</span>
               <input type="checkbox" checked={unpaidOnly} onChange={(e) => setUnpaidOnly(e.target.checked)} style={{ accentColor: COLORS.brand, width: 18, height: 18 }} />
             </label>
@@ -185,11 +185,11 @@ export default function TimesheetExport({ shifts, employers, profile, onClose })
 }
 
 const overlay = { position: "fixed", inset: 0, background: "rgba(11,33,25,0.55)", zIndex: 65, display: "flex", justifyContent: "center", alignItems: "flex-start", overflowY: "auto", padding: "2rem 1rem", fontFamily: FONTS.body };
-const card = { background: "#fff", border: `1px solid ${COLORS.border}`, borderRadius: 16 };
+const card = { background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 16 };
 const flabel = { fontFamily: FONTS.body, fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", color: COLORS.label, display: "block", marginBottom: 6 };
-const input = { width: "100%", padding: "11px 13px", boxSizing: "border-box", border: `1px solid ${COLORS.border}`, borderRadius: 12, background: "#fff", fontFamily: FONTS.body, fontSize: 15, color: COLORS.ink, outline: "none" };
+const input = { width: "100%", padding: "11px 13px", boxSizing: "border-box", border: `1px solid ${COLORS.border}`, borderRadius: 12, background: COLORS.card, fontFamily: FONTS.body, fontSize: 15, color: COLORS.ink, outline: "none" };
 const primaryBtn = { flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 13, borderRadius: 14, border: "none", cursor: "pointer", background: "linear-gradient(135deg,#0A7B57,#0B3D2E)", color: "#fff", fontFamily: FONTS.body, fontWeight: 600, fontSize: 14, boxShadow: "0 12px 24px -12px rgba(10,123,87,.55)" };
-const secondaryBtn = { flex: "0 0 auto", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "13px 18px", borderRadius: 14, border: `1px solid ${COLORS.border}`, background: "#fff", color: COLORS.ink, fontFamily: FONTS.body, fontWeight: 600, fontSize: 14, cursor: "pointer" };
+const secondaryBtn = { flex: "0 0 auto", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "13px 18px", borderRadius: 14, border: `1px solid ${COLORS.border}`, background: COLORS.card, color: COLORS.ink, fontFamily: FONTS.body, fontWeight: 600, fontSize: 14, cursor: "pointer" };
 
 function Summary({ label, value, accent }) {
   return (

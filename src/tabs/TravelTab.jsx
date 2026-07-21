@@ -14,7 +14,7 @@ const GOLD_TEXT = "#B77E17";
 const MODES = {
   driving: { label: "Driving", tag: "Drive", Icon: Car, bg: COLORS.tint, color: COLORS.brand, bar: COLORS.brand },
   transit: { label: "Bus / train", tag: "Bus", Icon: Bus, bg: COLORS.goldTint, color: GOLD_TEXT, bar: COLORS.gold },
-  walking: { label: "Walking", tag: "Walk", Icon: Footprints, bg: "#EEF2EF", color: COLORS.label, bar: COLORS.label },
+  walking: { label: "Walking", tag: "Walk", Icon: Footprints, bg: "var(--zc-subtle)", color: COLORS.label, bar: COLORS.label },
 };
 
 function pad(n) { return String(n).padStart(2, "0"); }
@@ -132,7 +132,7 @@ export default function TravelTab({ shiftsWithTravel, totalTravelCost, totalEarn
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: COLORS.ink }}>{cfg.label}</div>
-                    <div style={{ height: 6, borderRadius: 4, background: "#EEF2EF", marginTop: 6, overflow: "hidden" }}>
+                    <div style={{ height: 6, borderRadius: 4, background: "var(--zc-subtle)", marginTop: 6, overflow: "hidden" }}>
                       <div style={{ height: "100%", borderRadius: 4, background: cfg.bar, width: `${Math.round((val / maxMode) * 100)}%` }} />
                     </div>
                   </div>
@@ -156,7 +156,7 @@ export default function TravelTab({ shiftsWithTravel, totalTravelCost, totalEarn
                   <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.ink, display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</span>
                     {cfg && (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 600, color: COLORS.inkSoft, background: "#EEF2EF", padding: "2px 7px", borderRadius: 6, flexShrink: 0 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 600, color: COLORS.inkSoft, background: "var(--zc-subtle)", padding: "2px 7px", borderRadius: 6, flexShrink: 0 }}>
                         {TagIcon && <TagIcon size={11} strokeWidth={2} />}{cfg.tag}
                       </span>
                     )}

@@ -171,7 +171,7 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
     >
       <style>{`
         .asf-inp{width:100%;padding:12px 14px;border:1px solid ${COLORS.border};border-radius:13px;
-          background:#fff;font-family:'Inter',sans-serif;font-size:15px;color:${COLORS.ink};outline:none;
+          background:var(--zc-card);font-family:'Inter',sans-serif;font-size:15px;color:${COLORS.ink};outline:none;
           box-sizing:border-box;transition:border-color .15s,box-shadow .15s}
         .asf-inp:focus{border-color:${COLORS.brand};box-shadow:0 0 0 3px rgba(10,123,87,.12)}
         .asf-body::-webkit-scrollbar{display:none}
@@ -407,7 +407,7 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
                       padding: "10px 0",
                       borderRadius: 12,
                       border: on ? "1px solid transparent" : `1px solid ${COLORS.border}`,
-                      background: on ? COLORS.deep : "#fff",
+                      background: on ? COLORS.deep : COLORS.card,
                       color: on ? "#fff" : COLORS.inkSoft,
                       fontSize: 12.5,
                       fontWeight: 600,
