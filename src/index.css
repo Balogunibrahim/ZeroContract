@@ -27,16 +27,20 @@
 }
 
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --zc-bg: #0f1512;
   --zc-ink: #ecf2ed;
   --zc-inkSoft: #a3b4aa;
-  --zc-label: #6f8177;
+  --zc-label: #84978b;
   --zc-card: #1a241f;
   --zc-border: #2a362f;
   --zc-line: #2a362f;
   --zc-danger: #e4785c;
   --zc-subtle: #23302a;
   --zc-nav: rgba(20, 28, 24, 0.92);
+  /* Brighter green so green text/eyebrows read on the dark background */
+  --zc-brand: #33c48e;
+  --zc-navy: #33c48e;
 }
 
 :root {
