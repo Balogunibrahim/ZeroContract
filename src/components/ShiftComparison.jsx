@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, X, Check } from "lucide-react";
 import { estimateTax } from "../utils/taxUtils";
+import { getDistance, estimateTravelCost, attachAutocomplete } from "../utils/mapsUtils";
 import { COLORS, FONTS, formatMoney } from "../theme";
 
 const fieldLabelStyle = {
@@ -28,6 +29,12 @@ const inputStyle = {
   outline: "none",
 };
 
+const MODES = [
+  { id: "driving", label: "Drive" },
+  { id: "transit", label: "Bus / train" },
+  { id: "walking", label: "Walk" },
+];
+
 function calcHours(start, end) {
   if (!start || !end) return 0;
   const [sh, sm] = start.split(":").map(Number);
@@ -41,19 +48,65 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 function newCandidate() {
-  return { id: uid(), name: "", start: "09:00", end: "17:00", rate: "", travelCost: "0" };
+  return { id: uid(), name: "", start: "09:00", end: "17:00", rate: "", travelCost: "0", workAddress: "", travelMode: "driving", distanceKm: null, estBusy: false, estMsg: "", estErr: "" };
+}
+
+// Address field that wires up Google autocomplete on mount.
+function AddressInput({ value, onChange, onSelect, ariaLabel }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    attachAutocomplete(ref.current, onSelect);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <input
+      ref={ref}
+      aria-label={ariaLabel}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="Where is the shift?"
+      style={{ ...inputStyle, fontWeight: 500 }}
+    />
+  );
 }
 
 export default function ShiftComparison({ profile, baselineEarnings, onClose }) {
   const [candidates, setCandidates] = useState([newCandidate(), newCandidate()]);
+  const homeAddress = profile?.home_address || "";
 
   const region = profile?.tax_region && profile.tax_region !== "skip" ? profile.tax_region : "rest_of_uk";
   const baseIncome = (baselineEarnings || 0) + (profile?.other_income || 0);
 
-  const update = (id, field, value) =>
-    setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
+  const update = (id, patch) =>
+    setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
   const addCandidate = () => setCandidates((prev) => [...prev, newCandidate()]);
   const removeCandidate = (id) => setCandidates((prev) => prev.filter((c) => c.id !== id));
+
+  const estimate = async (c) => {
+    if (!homeAddress) {
+      update(c.id, { estErr: "Add your home address in Settings first.", estMsg: "" });
+      return;
+    }
+    if (!c.workAddress.trim()) {
+      update(c.id, { estErr: "Type the workplace address first.", estMsg: "" });
+      return;
+    }
+    update(c.id, { estBusy: true, estErr: "", estMsg: "" });
+    try {
+      const res = await getDistance(homeAddress, c.workAddress.trim(), c.travelMode);
+      const cost = estimateTravelCost(res.distanceKm, c.travelMode, res.fare);
+      update(c.id, {
+        estBusy: false,
+        distanceKm: res.distanceKm,
+        travelCost: cost != null ? String(cost) : c.travelCost,
+        estMsg: cost != null
+          ? `${res.distanceKm} km each way, about ${res.durationText}.`
+          : `${res.distanceKm} km each way. Type your usual return fare in Travel £.`,
+      });
+    } catch (err) {
+      update(c.id, { estBusy: false, estErr: err.message || "Couldn't look that up." });
+    }
+  };
 
   const results = candidates.map((c, i) => {
     const hours = calcHours(c.start, c.end);
@@ -72,7 +125,6 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
   const sorted = [...valid].sort((a, b) => b.netPerHour - a.netPerHour);
   const best = sorted[0];
   const second = sorted[1];
-
   const label = (c, i) => (c.name && c.name.trim() ? c.name.trim() : `Offer ${i + 1}`);
 
   return (
@@ -83,7 +135,7 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
           <button onClick={onClose} aria-label="Close" style={{ width: 34, height: 34, borderRadius: 11, border: `1px solid ${COLORS.border}`, background: "#fff", display: "grid", placeItems: "center", color: COLORS.inkSoft, cursor: "pointer" }}><X size={16} /></button>
         </div>
         <p style={{ fontFamily: FONTS.body, fontSize: 13, color: COLORS.inkSoft, margin: "0 0 20px", lineHeight: 1.55 }}>
-          Enter two offers. We show which one actually pays more per hour once tax and travel are taken off.
+          Enter two offers with their addresses. We work out the distance from home and show which one actually pays more per hour once tax and travel are taken off.
         </p>
 
         {candidates.map((c, i) => {
@@ -111,7 +163,7 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
                 <input
                   aria-label={`Offer ${i + 1} name`}
                   value={c.name}
-                  onChange={(e) => update(c.id, "name", e.target.value)}
+                  onChange={(e) => update(c.id, { name: e.target.value })}
                   placeholder={`Offer ${i + 1}`}
                   style={{ ...inputStyle, border: "none", padding: "2px 0", fontFamily: FONTS.display, fontSize: 16, fontWeight: 700, borderRadius: 0 }}
                 />
@@ -122,17 +174,59 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
                 )}
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 12px" }}>
-                <Field label="Start"><input aria-label={`Offer ${i + 1} start`} type="time" value={c.start} onChange={(e) => update(c.id, "start", e.target.value)} style={inputStyle} /></Field>
-                <Field label="End"><input aria-label={`Offer ${i + 1} end`} type="time" value={c.end} onChange={(e) => update(c.id, "end", e.target.value)} style={inputStyle} /></Field>
-                <Field label="Rate £/hr"><input aria-label={`Offer ${i + 1} rate`} type="number" step="0.01" placeholder="12.50" value={c.rate} onChange={(e) => update(c.id, "rate", e.target.value)} style={inputStyle} /></Field>
-                <Field label="Travel £"><input aria-label={`Offer ${i + 1} travel`} type="number" step="0.01" placeholder="0" value={c.travelCost} onChange={(e) => update(c.id, "travelCost", e.target.value)} style={inputStyle} /></Field>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <Field label="Start"><input aria-label={`Offer ${i + 1} start`} type="time" value={c.start} onChange={(e) => update(c.id, { start: e.target.value })} style={inputStyle} /></Field>
+                <Field label="End"><input aria-label={`Offer ${i + 1} end`} type="time" value={c.end} onChange={(e) => update(c.id, { end: e.target.value })} style={inputStyle} /></Field>
+                <Field label="Rate £/hr"><input aria-label={`Offer ${i + 1} rate`} type="number" step="0.01" placeholder="12.50" value={c.rate} onChange={(e) => update(c.id, { rate: e.target.value })} style={inputStyle} /></Field>
+                <Field label="Travel £"><input aria-label={`Offer ${i + 1} travel cost`} type="number" step="0.01" placeholder="0" value={c.travelCost} onChange={(e) => update(c.id, { travelCost: e.target.value })} style={inputStyle} /></Field>
+              </div>
+
+              {/* Address + estimate */}
+              <div style={{ marginTop: 12 }}>
+                <label style={fieldLabelStyle}>Workplace address</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <AddressInput
+                      ariaLabel={`Offer ${i + 1} workplace address`}
+                      value={c.workAddress}
+                      onChange={(v) => update(c.id, { workAddress: v })}
+                      onSelect={(addr) => update(c.id, { workAddress: addr })}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => estimate(c)}
+                    disabled={c.estBusy}
+                    style={{ flex: "0 0 auto", padding: "0 14px", borderRadius: 12, border: `1px solid ${COLORS.brand}`, background: COLORS.tint, color: COLORS.brand, fontFamily: FONTS.body, fontWeight: 600, fontSize: 12.5, cursor: "pointer", whiteSpace: "nowrap" }}
+                  >
+                    {c.estBusy ? "…" : "Estimate"}
+                  </button>
+                </div>
+                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                  {MODES.map((m) => {
+                    const on = c.travelMode === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => update(c.id, { travelMode: m.id })}
+                        style={{ flex: 1, padding: "7px 0", borderRadius: 10, border: on ? "1px solid transparent" : `1px solid ${COLORS.border}`, background: on ? COLORS.deep : "#fff", color: on ? "#fff" : COLORS.inkSoft, fontSize: 11.5, fontWeight: 600, fontFamily: FONTS.body, cursor: "pointer" }}
+                      >
+                        {m.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {c.estMsg && <p style={{ fontSize: 11.5, color: COLORS.brand, margin: "8px 0 0", background: COLORS.tint, borderRadius: 10, padding: "8px 11px", lineHeight: 1.4 }}>{c.estMsg}</p>}
+                {c.estErr && <p style={{ fontSize: 11.5, color: COLORS.danger, margin: "8px 0 0", lineHeight: 1.4 }}>{c.estErr}</p>}
               </div>
 
               {showResults && (
                 <>
                   <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginTop: 16, paddingTop: 14, borderTop: `1px dashed ${COLORS.line}` }}>
-                    <span style={{ fontSize: 12, color: COLORS.inkSoft }}>{r.hours.toFixed(1)}h shift</span>
+                    <span style={{ fontSize: 12, color: COLORS.inkSoft }}>
+                      {r.hours.toFixed(1)}h{c.distanceKm ? ` · ${c.distanceKm} km each way` : ""}
+                    </span>
                     <div style={{ textAlign: "right" }}>
                       <div style={{ fontFamily: FONTS.display, fontSize: 12, color: COLORS.label, textDecoration: "line-through" }}>{formatMoney(r.rate)}/h</div>
                       <div style={{ fontFamily: FONTS.display, fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1, color: COLORS.ink }}>{formatMoney(r.netPerHour)}</div>
@@ -161,7 +255,7 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
                 {label(best, best.index)} wins by {formatMoney(Math.max(0, best.netPerHour - second.netPerHour))}/hr
               </b>
               <span style={{ fontSize: 12, color: "#BFE0D3", display: "block", marginTop: 2, lineHeight: 1.4 }}>
-                After tax and travel, it leaves more in your pocket for every hour worked.
+                After tax and the travel to get there, it leaves more in your pocket every hour.
               </span>
             </div>
           </div>
@@ -172,7 +266,7 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
         </button>
 
         <p style={{ fontFamily: FONTS.body, fontSize: 11.5, color: COLORS.label, marginTop: 14, lineHeight: 1.5 }}>
-          Tax is estimated on top of what you've already logged this year. Rough estimate, not financial advice.
+          Distance and tax are estimates. Real figures depend on the route and your total year's income.
         </p>
       </div>
     </div>
