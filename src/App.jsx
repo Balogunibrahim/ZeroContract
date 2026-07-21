@@ -197,6 +197,15 @@ function MainApp({ session, onShowPrivacy, offline }) {
   const [idleWarning, setIdleWarning] = useState(false);
   const resetIdle = useRef(() => {});
 
+  // Sign out when the app is minimised / sent to the background, for security.
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === "hidden") supabase.auth.signOut();
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, []);
+
   // Apply theme + currency preferences (from profile.settings).
   const themePref = profile?.settings?.theme || "system";
   const currencyPref = profile?.settings?.currency || "GBP";

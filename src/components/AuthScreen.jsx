@@ -117,7 +117,6 @@ function SocialRow() {
       <div style={{ display: "flex", gap: 10 }}>
         <SocialBtn label="Continue with Google" onClick={() => go("google")}><GoogleIcon /></SocialBtn>
         <SocialBtn label="Continue with Apple" onClick={() => go("apple")}><AppleIcon /></SocialBtn>
-        <SocialBtn label="Continue with Facebook" onClick={() => go("facebook")}><FacebookIcon /></SocialBtn>
       </div>
       {err && <p style={{ fontFamily: FONTS.body, color: COLORS.danger, fontSize: 12, margin: "10px 0 0", lineHeight: 1.45 }}>{err}</p>}
     </div>
@@ -356,7 +355,7 @@ function SignupForm({ onSwitch, onShowPrivacy, email, setEmail, notice }) {
         <button type="submit" disabled={busy} style={{ ...primaryBtn, opacity: busy ? 0.7 : 1 }}>{busy ? "Creating account…" : "Create account"}</button>
         <SocialRow />
         <p style={{ textAlign: "center", fontSize: 11.5, color: COLORS.label, marginTop: 12, lineHeight: 1.5 }}>
-          By continuing with Google, Apple or Facebook you agree to the{" "}
+          By continuing with Google or Apple you agree to the{" "}
           <button type="button" onClick={onShowPrivacy} style={{ ...linkBtn, fontSize: 11.5 }}>Privacy Policy</button>.
         </p>
         <p style={{ textAlign: "center", fontSize: 12.5, color: COLORS.inkSoft, marginTop: 14 }}>
