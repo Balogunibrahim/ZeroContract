@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Bell } from "lucide-react";
 import { supabase } from "./lib/supabaseClient";
 import AuthScreen from "./components/AuthScreen";
@@ -185,6 +185,36 @@ function MainApp({ session, onShowPrivacy, offline }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [idleWarning, setIdleWarning] = useState(false);
+  const resetIdle = useRef(() => {});
+
+  // Auto sign-out after 30 minutes of inactivity, with a 1-minute warning.
+  useEffect(() => {
+    const IDLE_MS = 30 * 60 * 1000;
+    const WARN_MS = 60 * 1000;
+    let warnTimer, outTimer;
+    const arm = () => {
+      clearTimeout(warnTimer);
+      clearTimeout(outTimer);
+      setIdleWarning(false);
+      warnTimer = setTimeout(() => setIdleWarning(true), IDLE_MS - WARN_MS);
+      outTimer = setTimeout(() => supabase.auth.signOut(), IDLE_MS);
+    };
+    resetIdle.current = arm;
+    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"];
+    let last = 0;
+    const onActivity = () => {
+      const now = Date.now();
+      if (now - last > 2000) { last = now; arm(); }
+    };
+    events.forEach((e) => window.addEventListener(e, onActivity, { passive: true }));
+    arm();
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, onActivity));
+      clearTimeout(warnTimer);
+      clearTimeout(outTimer);
+    };
+  }, []);
 
   const loadAll = async () => {
     setLoadError(false);
@@ -485,6 +515,29 @@ function MainApp({ session, onShowPrivacy, offline }) {
           saving={saving}
           saveError={saveError}
         />
+      )}
+
+      {idleWarning && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(11,33,25,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", fontFamily: UIFONT.body }}>
+          <div style={{ background: UI.bg, borderRadius: 24, maxWidth: 360, width: "100%", padding: "1.75rem", boxShadow: "0 30px 60px -22px rgba(0,0,0,.5)", textAlign: "center" }}>
+            <p style={{ fontFamily: UIFONT.display, fontSize: 20, fontWeight: 700, color: UI.ink, margin: "0 0 8px" }}>Still there?</p>
+            <p style={{ fontSize: 14, color: UI.inkSoft, lineHeight: 1.55, margin: "0 0 20px" }}>
+              You've been inactive for a while. For your security we'll sign you out in a minute.
+            </p>
+            <button
+              onClick={() => resetIdle.current()}
+              style={{ width: "100%", padding: 14, borderRadius: 14, border: "none", cursor: "pointer", background: "linear-gradient(135deg,#0A7B57,#0B3D2E)", color: "#fff", fontFamily: UIFONT.body, fontWeight: 600, fontSize: 15, boxShadow: "0 12px 24px -10px rgba(10,123,87,.55)" }}
+            >
+              Stay signed in
+            </button>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              style={{ width: "100%", padding: 12, marginTop: 8, borderRadius: 14, border: "none", background: "none", color: UI.inkSoft, fontFamily: UIFONT.body, fontWeight: 600, fontSize: 14, cursor: "pointer" }}
+            >
+              Sign out now
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
