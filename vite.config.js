@@ -8,7 +8,25 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
-        importScripts: ['push-sw.js']
+        importScripts: ['push-sw.js'],
+        // Take control immediately and remove stale precaches on every update.
+        clientsClaim: true,
+        skipWaiting: true,
+        cleanupOutdatedCaches: true,
+        navigateFallback: 'index.html',
+        // Always fetch the page fresh from the network (fall back to cache only
+        // when offline) so a broken/blank cached shell can never strand users.
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html-pages',
+              networkTimeoutSeconds: 3,
+              expiration: { maxEntries: 12 },
+            },
+          },
+        ],
       },
       manifest: {
         name: 'Zero Contract',
