@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Trash2, Search, ArrowUpDown, X, FileText, CalendarPlus } from "lucide-react";
+import { Trash2, Search, ArrowUpDown, X, FileText, CalendarPlus, Plus } from "lucide-react";
 import CalendarView from "./CalendarView";
 import TimesheetExport from "../components/TimesheetExport";
 import { downloadShiftICS } from "../utils/calendar";
@@ -57,7 +57,7 @@ function monthLabel(iso) {
   return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
-export default function PlannerTab({ future, past, onEdit, onDelete, onTogglePaid, employers, profile }) {
+export default function PlannerTab({ future, past, onEdit, onDelete, onTogglePaid, employers, profile, onAddShift }) {
   const weekStart = profile?.settings?.weekStart || "Mon";
   const [view, setView] = useState("list");
   const [query, setQuery] = useState("");
@@ -131,6 +131,15 @@ export default function PlannerTab({ future, past, onEdit, onDelete, onTogglePai
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "1.5rem 1.25rem calc(6rem + env(safe-area-inset-bottom, 0px))" }}>
+      {onAddShift && (
+        <button
+          onClick={onAddShift}
+          aria-label="Add shift"
+          style={{ position: "fixed", right: "calc(18px + env(safe-area-inset-right, 0px))", bottom: "calc(92px + env(safe-area-inset-bottom, 0px))", width: 56, height: 56, borderRadius: 18, background: "linear-gradient(135deg,#0A7B57,#0B3D2E)", border: "none", boxShadow: "0 12px 24px -8px rgba(10,123,87,0.55)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 45 }}
+        >
+          <Plus size={26} color="#fff" />
+        </button>
+      )}
       <ScreenLabel>Shift roster</ScreenLabel>
       <DisplayHeader>Shifts</DisplayHeader>
 

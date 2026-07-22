@@ -1,47 +1,23 @@
-import { Home, List, Wallet, Car, Settings, Plus } from "lucide-react";
+import { Home, List, Wallet, Car } from "lucide-react";
 import { COLORS, FONTS } from "../theme";
 
 const TABS = [
   { id: "home", label: "Home", icon: Home },
   { id: "planner", label: "Shifts", icon: List },
+  { id: "zero", label: "Zero", center: true },
   { id: "money", label: "Money", icon: Wallet },
   { id: "travel", label: "Travel", icon: Car },
-  { id: "profile", label: "Settings", icon: Settings },
 ];
 
-export default function BottomNav({ active, onChange, onAddShift }) {
+export default function BottomNav({ active, onChange }) {
   return (
     <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 40 }}>
       <div style={{ position: "relative", maxWidth: 560, margin: "0 auto" }}>
-        {/* Floating add button */}
-        <button
-          onClick={onAddShift}
-          aria-label="Add shift"
-          style={{
-            position: "absolute",
-            right: "calc(18px + env(safe-area-inset-right, 0px))",
-            bottom: "calc(84px + env(safe-area-inset-bottom, 0px))",
-            width: 56,
-            height: 56,
-            borderRadius: 18,
-            background: "linear-gradient(135deg,#0A7B57,#0B3D2E)",
-            border: "none",
-            boxShadow: "0 12px 24px -8px rgba(10,123,87,0.55)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
-        >
-          <Plus size={26} color="#ffffff" />
-        </button>
-
-        {/* Tab bar */}
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(5, 1fr)",
-            alignItems: "center",
+            alignItems: "flex-end",
             background: "var(--zc-nav)",
             backdropFilter: "blur(18px)",
             WebkitBackdropFilter: "blur(18px)",
@@ -53,22 +29,47 @@ export default function BottomNav({ active, onChange, onAddShift }) {
           }}
         >
           {TABS.map((t) => {
-            const Icon = t.icon;
             const isActive = active === t.id;
+
+            if (t.center) {
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => onChange(t.id)}
+                  aria-label="Zero assistant"
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, border: "none", background: "none", cursor: "pointer", marginTop: -18 }}
+                >
+                  <span
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 18,
+                      background: COLORS.deep,
+                      border: "3px solid var(--zc-nav)",
+                      boxShadow: "0 10px 20px -6px rgba(11,61,46,0.55)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: FONTS.display,
+                      fontWeight: 700,
+                      fontSize: 26,
+                      color: "#7FC9AC",
+                      lineHeight: 1,
+                    }}
+                  >
+                    Z
+                  </span>
+                  <span style={{ fontFamily: FONTS.body, fontSize: 10, letterSpacing: 0.3, color: isActive ? COLORS.brand : COLORS.label, fontWeight: 700 }}>Zero</span>
+                </button>
+              );
+            }
+
+            const Icon = t.icon;
             return (
               <button
                 key={t.id}
                 onClick={() => onChange(t.id)}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 4,
-                  padding: "4px 0",
-                  border: "none",
-                  background: "none",
-                  cursor: "pointer",
-                }}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "4px 0", border: "none", background: "none", cursor: "pointer" }}
               >
                 <div
                   style={{
@@ -82,23 +83,9 @@ export default function BottomNav({ active, onChange, onAddShift }) {
                     transition: "background 0.15s",
                   }}
                 >
-                  <Icon
-                    size={20}
-                    color={isActive ? COLORS.brand : COLORS.label}
-                    strokeWidth={isActive ? 2.2 : 1.8}
-                  />
+                  <Icon size={20} color={isActive ? COLORS.brand : COLORS.label} strokeWidth={isActive ? 2.2 : 1.8} />
                 </div>
-                <span
-                  style={{
-                    fontFamily: FONTS.body,
-                    fontSize: 10,
-                    letterSpacing: 0.3,
-                    color: isActive ? COLORS.brand : COLORS.label,
-                    fontWeight: isActive ? 700 : 500,
-                  }}
-                >
-                  {t.label}
-                </span>
+                <span style={{ fontFamily: FONTS.body, fontSize: 10, letterSpacing: 0.3, color: isActive ? COLORS.brand : COLORS.label, fontWeight: isActive ? 700 : 500 }}>{t.label}</span>
               </button>
             );
           })}

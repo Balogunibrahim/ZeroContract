@@ -11,6 +11,7 @@ import PlannerTab from "./tabs/PlannerTab";
 import MoneyTab from "./tabs/MoneyTab";
 import TravelTab from "./tabs/TravelTab";
 import ProfileTab from "./tabs/ProfileTab";
+import ZeroTab from "./tabs/ZeroTab";
 import OnboardingWelcome from "./components/OnboardingWelcome";
 import IntroSplash from "./components/IntroSplash";
 import Landing from "./components/Landing";
@@ -550,7 +551,19 @@ function MainApp({ session, onShowPrivacy, offline }) {
         />
       )}
       {activeTab === "planner" && (
-        <PlannerTab future={future} past={past} onEdit={openEditShift} onDelete={handleDelete} onTogglePaid={togglePaid} employers={employerOptions} profile={profile} />
+        <PlannerTab future={future} past={past} onEdit={openEditShift} onDelete={handleDelete} onTogglePaid={togglePaid} employers={employerOptions} profile={profile} onAddShift={openAddShift} />
+      )}
+      {activeTab === "zero" && (
+        <ZeroTab
+          firstName={profile?.first_name || ""}
+          shifts={enriched}
+          taxEstimate={taxEstimate}
+          totalEarned={totalEarned}
+          totalUnpaid={totalUnpaid}
+          nextPayday={nextPayday}
+          profile={profile}
+          onSaveUsage={(next) => saveProfile({ settings: { ...(profile?.settings || {}), zero: next } })}
+        />
       )}
       {activeTab === "money" && <MoneyTab profile={profile} taxEstimate={taxEstimate} baselineEarnings={allEarnings} />}
       {activeTab === "travel" && <TravelTab shiftsWithTravel={shiftsWithTravel} totalTravelCost={totalTravelCost} totalEarnings={allEarnings} totalHours={totalHours} />}
@@ -575,7 +588,7 @@ function MainApp({ session, onShowPrivacy, offline }) {
         />
       )}
 
-      <BottomNav active={activeTab} onChange={setActiveTab} onAddShift={openAddShift} />
+      <BottomNav active={activeTab} onChange={setActiveTab} />
 
       {showForm && (
         <AddShiftForm
