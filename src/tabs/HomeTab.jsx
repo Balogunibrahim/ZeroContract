@@ -17,16 +17,8 @@ export default function HomeTab({
   upcomingCount,
   totalUnpaid,
   nextPayday,
-  taxEstimate,
   nextShift,
-  onSeeBreakdown,
 }) {
-  const takeHome = taxEstimate ? taxEstimate.estimatedTakeHome : null;
-  const takePct =
-    taxEstimate && totalEarned > 0
-      ? Math.round((takeHome / totalEarned) * 100)
-      : null;
-
   const pdDays = daysUntil(nextPayday);
   // Cosmetic ring fill: how close payday is, on a rough 30-day view
   const pdFill =

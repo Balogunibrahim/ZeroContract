@@ -34,12 +34,14 @@ const GROUPS = [
   { id: "month", label: "Month" },
 ];
 
-// ISO date -> start of that week (ISO string), honouring week-start pref
+// ISO date -> start of that week (ISO string), honouring week-start pref.
+// Formats from local date parts (not toISOString) so it's timezone-safe.
 function weekStartISO(iso, weekStart) {
   const d = new Date(iso + "T00:00:00");
   const day = weekStart === "Sun" ? d.getDay() : (d.getDay() + 6) % 7;
   d.setDate(d.getDate() - day);
-  return d.toISOString().slice(0, 10);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
 function weekLabel(iso) {

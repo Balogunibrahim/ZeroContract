@@ -7,6 +7,7 @@ import {
   cardStyle,
   formatMoney,
   formatDate,
+  currencySymbol,
 } from "../theme";
 
 const GOLD_TEXT = "#B77E17";
@@ -68,12 +69,12 @@ export default function TravelTab({ shiftsWithTravel, totalTravelCost, totalEarn
         <div style={{ position: "absolute", right: -30, top: -40, width: 160, height: 160, background: "radial-gradient(circle,rgba(224,160,43,.24),transparent 70%)", borderRadius: "50%" }} />
         <p style={{ fontSize: 11, color: "#9FD0BE", textTransform: "uppercase", letterSpacing: 0.6, fontWeight: 600, margin: 0, position: "relative" }}>Total spent on travel</p>
         <p style={{ fontFamily: FONTS.display, fontSize: 44, fontWeight: 700, letterSpacing: "-0.03em", margin: "4px 0 0", lineHeight: 1, position: "relative" }}>
-          <span style={{ color: "#7FC9AC", fontSize: 25 }}>£</span>{totalTravelCost.toFixed(2)}
+          <span style={{ color: "#7FC9AC", fontSize: 25 }}>{currencySymbol()}</span>{totalTravelCost.toFixed(2)}
         </p>
         <div style={{ display: "flex", gap: 22, marginTop: 16, position: "relative", zIndex: 2, flexWrap: "wrap" }}>
           <HeroStat value={String(count)} label={count === 1 ? "shift" : "shifts"} />
           <HeroStat value={formatMoney(perShift)} label="per shift" />
-          <HeroStat value={`−£${perHour.toFixed(2)}/h`} label="on real rate" gold />
+          <HeroStat value={`−${currencySymbol()}${perHour.toFixed(2)}/h`} label="on real rate" gold />
         </div>
       </div>
 

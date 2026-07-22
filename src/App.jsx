@@ -197,13 +197,21 @@ function MainApp({ session, onShowPrivacy, offline }) {
   const [idleWarning, setIdleWarning] = useState(false);
   const resetIdle = useRef(() => {});
 
-  // Sign out when the app is minimised / sent to the background, for security.
+  // Sign out for security when the app stays in the background a while. A short
+  // grace period means quick app-switches (adding to calendar, exporting a
+  // timesheet, glancing at another app) don't log you out.
   useEffect(() => {
-    const onHide = () => {
-      if (document.visibilityState === "hidden") supabase.auth.signOut();
+    const GRACE_MS = 45 * 1000;
+    let timer;
+    const onVis = () => {
+      if (document.visibilityState === "hidden") {
+        timer = setTimeout(() => supabase.auth.signOut(), GRACE_MS);
+      } else {
+        clearTimeout(timer);
+      }
     };
-    document.addEventListener("visibilitychange", onHide);
-    return () => document.removeEventListener("visibilitychange", onHide);
+    document.addEventListener("visibilitychange", onVis);
+    return () => { clearTimeout(timer); document.removeEventListener("visibilitychange", onVis); };
   }, []);
 
   // Apply theme + currency preferences (from profile.settings).

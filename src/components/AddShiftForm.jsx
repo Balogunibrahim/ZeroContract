@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { X, CalendarPlus } from "lucide-react";
 import { getDistance, estimateTravelCost, attachAutocomplete } from "../utils/mapsUtils";
 import { downloadShiftICS } from "../utils/calendar";
-import { COLORS, FONTS, formatMoney } from "../theme";
+import { COLORS, FONTS, formatMoney, currencySymbol } from "../theme";
 
 const flabel = {
   fontFamily: FONTS.body,
@@ -227,7 +227,7 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
               This shift pays
             </div>
             <div style={{ fontFamily: FONTS.display, fontSize: 40, fontWeight: 700, letterSpacing: "-0.02em", margin: "2px 0 0", lineHeight: 1, fontVariantNumeric: "tabular-nums", position: "relative", zIndex: 2 }}>
-              <span style={{ color: "#7FC9AC", fontSize: 22 }}>£</span>
+              <span style={{ color: "#7FC9AC", fontSize: 22 }}>{currencySymbol()}</span>
               {money(gross)}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "14px 18px", marginTop: 14, position: "relative", zIndex: 2 }}>
@@ -236,15 +236,15 @@ export default function AddShiftForm({ editingShift, homeAddress, lastWorkAddres
                 worked
               </div>
               <div style={{ fontSize: 11, color: "#BFE0D3" }}>
-                <b style={{ display: "block", fontFamily: FONTS.display, fontSize: 15, color: "#fff", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>£{money(travel)}</b>
+                <b style={{ display: "block", fontFamily: FONTS.display, fontSize: 15, color: "#fff", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{currencySymbol()}{money(travel)}</b>
                 travel
               </div>
               <div style={{ fontSize: 11, color: "#BFE0D3" }}>
-                <b style={{ display: "block", fontFamily: FONTS.display, fontSize: 15, color: "#7FC9AC", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>£{money(takeHome)}</b>
+                <b style={{ display: "block", fontFamily: FONTS.display, fontSize: 15, color: "#7FC9AC", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{currencySymbol()}{money(takeHome)}</b>
                 take home
               </div>
               <div style={{ fontSize: 11, color: "#BFE0D3" }}>
-                <b style={{ display: "block", fontFamily: FONTS.display, fontSize: 15, color: "#F0C766", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>£{realRate.toFixed(2)}/h</b>
+                <b style={{ display: "block", fontFamily: FONTS.display, fontSize: 15, color: "#F0C766", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{currencySymbol()}{realRate.toFixed(2)}/h</b>
                 real rate
               </div>
             </div>
