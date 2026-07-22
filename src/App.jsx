@@ -13,6 +13,7 @@ import TravelTab from "./tabs/TravelTab";
 import ProfileTab from "./tabs/ProfileTab";
 import OnboardingWelcome from "./components/OnboardingWelcome";
 import IntroSplash from "./components/IntroSplash";
+import Landing from "./components/Landing";
 import { estimateTax } from "./utils/taxUtils";
 import { COLORS as UI, FONTS as UIFONT, LogoLockup, applyTheme, setCurrency } from "./theme";
 
@@ -132,6 +133,7 @@ export default function App() {
   const intro = !introDone ? (
     <IntroSplash onDone={() => { try { sessionStorage.setItem("zc_intro", "1"); } catch { /* ignore */ } setIntroDone(true); }} />
   ) : null;
+  const [authEntry, setAuthEntry] = useState(null); // null = landing, "login" | "signup" = show auth
 
   useEffect(() => {
     const handleOnline = () => setOffline(false);
@@ -175,7 +177,11 @@ export default function App() {
       {intro}
       {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
       {!session ? (
-        <AuthScreen onShowPrivacy={() => setShowPrivacy(true)} />
+        authEntry ? (
+          <AuthScreen onShowPrivacy={() => setShowPrivacy(true)} initialMode={authEntry} />
+        ) : (
+          <Landing onLogin={() => setAuthEntry("login")} onSignup={() => setAuthEntry("signup")} />
+        )
       ) : (
         <MainApp session={session} onShowPrivacy={() => setShowPrivacy(true)} offline={offline} />
       )}

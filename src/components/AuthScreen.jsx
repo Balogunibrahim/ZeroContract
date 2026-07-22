@@ -146,8 +146,8 @@ function AuthShell({ title, subtitle, children }) {
   );
 }
 
-export default function AuthScreen({ onShowPrivacy }) {
-  const [mode, setMode] = useState("login");
+export default function AuthScreen({ onShowPrivacy, initialMode }) {
+  const [mode, setMode] = useState(initialMode === "signup" ? "signup" : "login");
   const [email, setEmail] = useState(""); // shared across login/signup so the address carries over
   const [notice, setNotice] = useState("");
 
@@ -368,7 +368,7 @@ function ForgotForm({ onSwitch, email, setEmail }) {
     setError(""); setInfo("");
     setBusy(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://zero-contract.vercel.app/reset-password",
+      redirectTo: window.location.origin + "/reset-password",
     });
     if (error) setError("Something went wrong. Please try again in a few minutes.");
     else setInfo("If that email has an account, a reset link is on its way. Check your inbox and spam folder.");
