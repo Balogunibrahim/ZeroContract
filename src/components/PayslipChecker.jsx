@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
-import { X, Check, AlertTriangle, Copy } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
+import { X, Check, AlertTriangle, Copy, Upload, Loader } from "lucide-react";
+import { supabase } from "../lib/supabaseClient";
 import { COLORS, FONTS, formatMoney, formatRate } from "../theme";
 
 function inMonth(dateISO, y, m) {
@@ -14,6 +15,37 @@ export default function PayslipChecker({ shifts, employers, profile, onClose }) 
   const [gross, setGross] = useState("");
   const [hoursPaid, setHoursPaid] = useState("");
   const [copied, setCopied] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState("");
+  const fileRef = useRef(null);
+
+  const handleUpload = async (file) => {
+    if (!file) return;
+    setUploadMsg("");
+    setUploading(true);
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result).split(",")[1] || "");
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke("parse-payslip", { body: { pdf: base64 } });
+      if (error) throw error;
+      if (data?.error) { setUploadMsg(data.message || "Couldn't read that payslip."); setUploading(false); return; }
+      const f = data?.fields || {};
+      if (f.grossPay != null) setGross(String(f.grossPay));
+      if (f.hoursPaid != null) setHoursPaid(String(f.hoursPaid));
+      if (f.employer) {
+        const match = names.find((n) => n.toLowerCase() === String(f.employer).toLowerCase() || n.toLowerCase().includes(String(f.employer).toLowerCase()) || String(f.employer).toLowerCase().includes(n.toLowerCase()));
+        if (match) setEmployer(match);
+      }
+      setUploadMsg("Filled in from your payslip — check the figures below.");
+    } catch (e) {
+      setUploadMsg("Couldn't read that file. You can enter the figures by hand instead.");
+    }
+    setUploading(false);
+  };
 
   const periodLabel = useMemo(() => {
     const now = new Date();
@@ -77,6 +109,18 @@ export default function PayslipChecker({ shifts, employers, profile, onClose }) 
           </div>
         ) : (
           <>
+            <input ref={fileRef} type="file" accept="application/pdf" style={{ display: "none" }} onChange={(e) => handleUpload(e.target.files?.[0])} />
+            <button
+              type="button"
+              onClick={() => fileRef.current && fileRef.current.click()}
+              disabled={uploading}
+              style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 13, borderRadius: 14, border: `1px solid ${COLORS.brand}`, background: COLORS.tint, color: COLORS.brand, fontFamily: FONTS.body, fontWeight: 600, fontSize: 14, cursor: "pointer", marginBottom: 10 }}
+            >
+              {uploading ? <Loader size={17} className="zc-spin-i" /> : <Upload size={17} />}
+              {uploading ? "Reading your payslip…" : "Upload payslip PDF"}
+            </button>
+            {uploadMsg && <p style={{ fontSize: 12, color: COLORS.inkSoft, margin: "0 0 14px", lineHeight: 1.4 }}>{uploadMsg}</p>}
+
             <label style={flabel}>Employer</label>
             <select aria-label="Employer" value={employer} onChange={(e) => setEmployer(e.target.value)} style={{ ...input, appearance: "none", cursor: "pointer", marginBottom: 14 }}>
               {names.map((n) => <option key={n} value={n}>{n}</option>)}
