@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Scale } from "lucide-react";
+import { Scale, ReceiptText } from "lucide-react";
 import ShiftComparison from "../components/ShiftComparison";
+import PayslipChecker from "../components/PayslipChecker";
 import {
   COLORS,
   FONTS,
@@ -16,8 +17,9 @@ const REGION_LABEL = {
   scotland: "Scotland",
 };
 
-export default function MoneyTab({ profile, taxEstimate, baselineEarnings }) {
+export default function MoneyTab({ profile, taxEstimate, baselineEarnings, shifts, employers }) {
   const [showCompare, setShowCompare] = useState(false);
+  const [showPayslip, setShowPayslip] = useState(false);
 
   const gross = taxEstimate ? taxEstimate.grossEarnings : 0;
   const takeHome = taxEstimate ? taxEstimate.estimatedTakeHome : 0;
@@ -126,8 +128,28 @@ export default function MoneyTab({ profile, taxEstimate, baselineEarnings }) {
         </span>
       </button>
 
+      {/* Payslip checker CTA (Zero+) */}
+      <button
+        onClick={() => setShowPayslip(true)}
+        style={{ ...cardStyle, borderRadius: 20, width: "100%", display: "flex", alignItems: "center", gap: 14, padding: 16, cursor: "pointer", textAlign: "left", marginTop: 12 }}
+      >
+        <span style={{ width: 46, height: 46, flex: "0 0 46px", borderRadius: 14, background: COLORS.tint, color: COLORS.brand, display: "grid", placeItems: "center" }}>
+          <ReceiptText size={22} strokeWidth={2} />
+        </span>
+        <span style={{ flex: 1 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontFamily: FONTS.display, fontSize: 15.5, fontWeight: 700, color: COLORS.ink }}>Check a payslip</span>
+            <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.5, color: COLORS.deep, background: COLORS.gold, padding: "3px 7px", borderRadius: 7 }}>ZERO+</span>
+          </span>
+          <span style={{ display: "block", fontFamily: FONTS.body, fontSize: 12.5, color: COLORS.inkSoft, marginTop: 2 }}>Catch underpayment against the shifts you logged</span>
+        </span>
+      </button>
+
       {showCompare && (
         <ShiftComparison profile={profile} baselineEarnings={baselineEarnings} onClose={() => setShowCompare(false)} />
+      )}
+      {showPayslip && (
+        <PayslipChecker shifts={shifts || []} employers={employers || []} profile={profile} onClose={() => setShowPayslip(false)} />
       )}
     </div>
   );

@@ -570,7 +570,7 @@ function MainApp({ session, onShowPrivacy, offline }) {
           onSaveUsage={(next) => saveProfile({ settings: { ...(profile?.settings || {}), zero: next } })}
         />
       )}
-      {activeTab === "money" && <MoneyTab profile={profile} taxEstimate={taxEstimate} baselineEarnings={allEarnings} />}
+      {activeTab === "money" && <MoneyTab profile={profile} taxEstimate={taxEstimate} baselineEarnings={allEarnings} shifts={enriched} employers={employerOptions} />}
       {activeTab === "travel" && <TravelTab shiftsWithTravel={shiftsWithTravel} totalTravelCost={totalTravelCost} totalEarnings={allEarnings} totalHours={totalHours} />}
       {activeTab === "profile" && (
         <ProfileTab
