@@ -23,6 +23,8 @@ export default function MoneyTab({ profile, taxEstimate, baselineEarnings }) {
   const takeHome = taxEstimate ? taxEstimate.estimatedTakeHome : 0;
   const incomeTax = taxEstimate ? taxEstimate.estimatedIncomeTax : 0;
   const ni = taxEstimate ? taxEstimate.estimatedNI : 0;
+  const studentLoan = taxEstimate ? (taxEstimate.estimatedStudentLoan || 0) : 0;
+  const pension = taxEstimate ? (taxEstimate.estimatedPension || 0) : 0;
   const keepPct = taxEstimate && gross > 0 ? Math.round((takeHome / gross) * 100) : null;
   const effPct = taxEstimate ? (taxEstimate.effectiveRate * 100).toFixed(1) : null;
   const regionLabel = REGION_LABEL[profile?.tax_region];
@@ -72,11 +74,15 @@ export default function MoneyTab({ profile, taxEstimate, baselineEarnings }) {
               <span style={{ height: "100%", width: `${pct(takeHome)}%`, background: COLORS.brand }} />
               <span style={{ height: "100%", width: `${pct(incomeTax)}%`, background: COLORS.danger }} />
               <span style={{ height: "100%", width: `${pct(ni)}%`, background: COLORS.gold }} />
+              {studentLoan > 0 && <span style={{ height: "100%", width: `${pct(studentLoan)}%`, background: "#7E6BB5" }} />}
+              {pension > 0 && <span style={{ height: "100%", width: `${pct(pension)}%`, background: "#2E8B9E" }} />}
             </div>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               <LegendItem color={COLORS.brand} label="Take home" value={formatMoney(takeHome)} />
               <LegendItem color={COLORS.danger} label="Income Tax" value={formatMoney(incomeTax)} />
               <LegendItem color={COLORS.gold} label="Nat. Insurance" value={formatMoney(ni)} />
+              {studentLoan > 0 && <LegendItem color="#7E6BB5" label="Student loan" value={formatMoney(studentLoan)} />}
+              {pension > 0 && <LegendItem color="#2E8B9E" label="Pension" value={formatMoney(pension)} />}
             </div>
           </div>
 
@@ -86,6 +92,8 @@ export default function MoneyTab({ profile, taxEstimate, baselineEarnings }) {
             <TaxRow label="Gross earnings" value={formatMoney(gross)} first />
             <TaxRow label="Income Tax" value={`−${formatMoney(incomeTax)}`} negative />
             <TaxRow label="National Insurance" value={`−${formatMoney(ni)}`} negative />
+            {studentLoan > 0 && <TaxRow label="Student loan" value={`−${formatMoney(studentLoan)}`} negative />}
+            {pension > 0 && <TaxRow label="Pension" value={`−${formatMoney(pension)}`} negative />}
             <div style={{ borderTop: `2px solid ${COLORS.ink}`, marginTop: 4, paddingTop: 14, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: COLORS.inkSoft }}>Est. take home</span>
               <span style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 700, color: COLORS.brand }}>{formatMoney(takeHome)}</span>

@@ -486,7 +486,12 @@ function MainApp({ session, onShowPrivacy, offline }) {
   const allEarnings = enriched.reduce((sum, s) => sum + s.earnings, 0);
   const taxEstimate =
     profile && profile.tax_region !== "skip"
-      ? estimateTax(allEarnings, profile.other_income || 0, profile.tax_region || "rest_of_uk")
+      ? estimateTax(allEarnings, profile.other_income || 0, profile.tax_region || "rest_of_uk", {
+          taxCode: profile.settings?.taxCode,
+          employment: profile.settings?.employment,
+          studentLoan: profile.settings?.studentLoan,
+          pensionPct: profile.settings?.pensionPct,
+        })
       : null;
   const nextShift = future.length > 0 ? future[0] : null;
   const totalTravelCost = enriched.reduce((sum, s) => sum + (s.travelCost || 0), 0);

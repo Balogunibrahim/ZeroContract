@@ -211,10 +211,23 @@ export default function ProfileTab({ profile, session, onSave, onShowPrivacy, on
             theme: local.theme || "system",
             taxRegion: profile?.tax_region || "rest_of_uk",
             otherIncome: String(profile?.other_income || "0"),
+            taxCode: local.taxCode || "",
+            employment: local.employment || "employed",
+            studentLoan: local.studentLoan || "none",
+            pensionPct: local.pensionPct != null ? String(local.pensionPct) : "",
           }}
           onClose={() => setModal(null)}
           onSubmit={async (v) => {
-            const next = { ...local, currency: v.currency, weekStart: v.weekStart, theme: v.theme };
+            const next = {
+              ...local,
+              currency: v.currency,
+              weekStart: v.weekStart,
+              theme: v.theme,
+              taxCode: v.taxCode ? v.taxCode.trim() : "",
+              employment: v.employment,
+              studentLoan: v.studentLoan,
+              pensionPct: num(v.pensionPct),
+            };
             setLocal(next);
             return onSave({ tax_region: v.taxRegion, other_income: num(v.otherIncome), settings: next });
           }}
@@ -401,9 +414,13 @@ function PrefsEditor({ initial, onClose, onSubmit }) {
   const [theme, setTheme] = useState(initial.theme);
   const [taxRegion, setTaxRegion] = useState(initial.taxRegion);
   const [otherIncome, setOtherIncome] = useState(initial.otherIncome);
+  const [taxCode, setTaxCode] = useState(initial.taxCode || "");
+  const [employment, setEmployment] = useState(initial.employment || "employed");
+  const [studentLoan, setStudentLoan] = useState(initial.studentLoan || "none");
+  const [pensionPct, setPensionPct] = useState(initial.pensionPct || "");
   const select = { ...input, appearance: "none", cursor: "pointer" };
   return (
-    <Modal title="Preferences" onClose={onClose} onSubmit={() => onSubmit({ currency, weekStart, theme, taxRegion, otherIncome })}>
+    <Modal title="Preferences" onClose={onClose} onSubmit={() => onSubmit({ currency, weekStart, theme, taxRegion, otherIncome, taxCode, employment, studentLoan, pensionPct })}>
       <Field label="Currency">
         <select value={currency} onChange={(e) => setCurrency(e.target.value)} style={select}>
           <option value="GBP">£ GBP</option>
@@ -424,6 +441,8 @@ function PrefsEditor({ initial, onClose, onSubmit }) {
           <option value="dark">Dark</option>
         </select>
       </Field>
+
+      <p style={{ ...sectionLabel, margin: "8px 0 12px" }}>For an accurate tax estimate</p>
       <Field label="Tax region">
         <select value={taxRegion} onChange={(e) => setTaxRegion(e.target.value)} style={select}>
           <option value="rest_of_uk">England, Wales or Northern Ireland</option>
@@ -431,6 +450,24 @@ function PrefsEditor({ initial, onClose, onSubmit }) {
           <option value="skip">Prefer not to say</option>
         </select>
       </Field>
+      <Field label="Tax code (from your payslip)"><input type="text" placeholder="e.g. 1257L" value={taxCode} onChange={(e) => setTaxCode(e.target.value.toUpperCase())} style={input} /></Field>
+      <Field label="Employment">
+        <select value={employment} onChange={(e) => setEmployment(e.target.value)} style={select}>
+          <option value="employed">Employed (PAYE)</option>
+          <option value="self_employed">Self-employed</option>
+        </select>
+      </Field>
+      <Field label="Student loan">
+        <select value={studentLoan} onChange={(e) => setStudentLoan(e.target.value)} style={select}>
+          <option value="none">None</option>
+          <option value="plan1">Plan 1</option>
+          <option value="plan2">Plan 2</option>
+          <option value="plan4">Plan 4 (Scotland)</option>
+          <option value="plan5">Plan 5</option>
+          <option value="postgrad">Postgraduate</option>
+        </select>
+      </Field>
+      <Field label="Pension contribution (%)"><input type="number" step="0.5" min="0" placeholder="e.g. 5" value={pensionPct} onChange={(e) => setPensionPct(e.target.value)} style={input} /></Field>
       <Field label="Other annual income (£)"><input type="number" step="100" value={otherIncome} onChange={(e) => setOtherIncome(e.target.value)} style={input} /></Field>
     </Modal>
   );

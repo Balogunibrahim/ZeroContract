@@ -75,6 +75,7 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
   const homeAddress = profile?.home_address || "";
 
   const region = profile?.tax_region && profile.tax_region !== "skip" ? profile.tax_region : "rest_of_uk";
+  const taxOpts = { taxCode: profile?.settings?.taxCode, employment: profile?.settings?.employment, studentLoan: profile?.settings?.studentLoan, pensionPct: profile?.settings?.pensionPct };
   const baseIncome = (baselineEarnings || 0) + (profile?.other_income || 0);
 
   const update = (id, patch) =>
@@ -113,8 +114,8 @@ export default function ShiftComparison({ profile, baselineEarnings, onClose }) 
     const rate = parseFloat(c.rate) || 0;
     const travelCost = parseFloat(c.travelCost) || 0;
     const gross = Math.round(hours * rate * 100) / 100;
-    const withShift = estimateTax(baseIncome + gross, 0, region);
-    const withoutShift = estimateTax(baseIncome, 0, region);
+    const withShift = estimateTax(baseIncome + gross, 0, region, taxOpts);
+    const withoutShift = estimateTax(baseIncome, 0, region, taxOpts);
     const deduction = Math.max(0, withShift.totalDeductions - withoutShift.totalDeductions);
     const net = gross - deduction - travelCost;
     const netPerHour = hours > 0 ? net / hours : 0;

@@ -31,14 +31,16 @@ const NI_UPPER = 50270;
 const NI_MAIN_RATE = 0.08;   // 8% between PT and UEL
 const NI_UPPER_RATE = 0.02;  // 2% above UEL
 
-function calcIncomeTax(annualIncome, region) {
-  const bands = region === "scotland" ? SCOTLAND_BANDS : EW_BANDS;
+function calcIncomeTax(annualIncome, region, pa = 12570) {
+  const base = region === "scotland" ? SCOTLAND_BANDS : EW_BANDS;
+  // Swap the 0%-rate personal-allowance threshold for the code-derived one.
+  const bands = base.map((b, i) => (i === 0 ? { ...b, limit: pa } : b));
   let tax = 0;
   let prev = 0;
   for (const band of bands) {
     if (annualIncome <= prev) break;
     const taxable = Math.min(annualIncome, band.limit) - prev;
-    tax += taxable * band.rate;
+    if (taxable > 0) tax += taxable * band.rate;
     prev = band.limit;
   }
   return Math.max(0, tax);
@@ -47,13 +49,54 @@ function calcIncomeTax(annualIncome, region) {
 function calcNI(annualIncome) {
   let ni = 0;
   if (annualIncome > NI_LOWER) {
-    ni += Math.min(annualIncome, NI_UPPER - NI_LOWER) * NI_MAIN_RATE;
+    ni += Math.min(annualIncome - NI_LOWER, NI_UPPER - NI_LOWER) * NI_MAIN_RATE;
     // only apply upper rate to income above NI_UPPER
     if (annualIncome > NI_UPPER) {
       ni += (annualIncome - NI_UPPER) * NI_UPPER_RATE;
     }
   }
   return Math.max(0, ni);
+}
+
+// Self-employed National Insurance (Class 4): 6% between the thresholds, 2% above.
+const CLASS4_MAIN = 0.06;
+const CLASS4_UPPER = 0.02;
+function calcClass4NI(annualIncome) {
+  let ni = 0;
+  if (annualIncome > NI_LOWER) {
+    ni += Math.min(annualIncome - NI_LOWER, NI_UPPER - NI_LOWER) * CLASS4_MAIN;
+    if (annualIncome > NI_UPPER) ni += (annualIncome - NI_UPPER) * CLASS4_UPPER;
+  }
+  return Math.max(0, ni);
+}
+
+// Student loan repayment: a % of income above the plan's threshold.
+const STUDENT_LOAN_PLANS = {
+  plan1: { threshold: 24990, rate: 0.09 },
+  plan2: { threshold: 27295, rate: 0.09 },
+  plan4: { threshold: 31395, rate: 0.09 },
+  plan5: { threshold: 25000, rate: 0.09 },
+  postgrad: { threshold: 21000, rate: 0.06 },
+};
+function calcStudentLoan(plan, income) {
+  const p = STUDENT_LOAN_PLANS[plan];
+  if (!p) return 0;
+  return Math.max(0, (income - p.threshold) * p.rate);
+}
+
+// Personal allowance / special handling from a PAYE tax code.
+// Returns { special } for BR/D0/D1/NT, or { pa } (personal allowance in £).
+function parseTaxCode(code) {
+  const c = (code || "").toUpperCase().replace(/\s/g, "");
+  if (!c) return { pa: 12570 };
+  if (c === "NT") return { special: "NT" };
+  if (c === "BR") return { special: "BR" };
+  if (c === "D0") return { special: "D0" };
+  if (c === "D1") return { special: "D1" };
+  if (/^K\d+$/.test(c)) return { pa: -(parseInt(c.slice(1), 10) * 10) }; // K: adds to taxable income
+  const m = c.match(/^(\d+)[A-Z]+$/); // e.g. 1257L, 1100M
+  if (m) return { pa: parseInt(m[1], 10) * 10 };
+  return { pa: 12570 };
 }
 
 /**
@@ -65,27 +108,60 @@ function calcNI(annualIncome) {
  * @param {string} region          - "rest_of_uk" | "scotland" | "skip"
  * @returns {object}
  */
-export function estimateTax(appEarnings, otherIncome = 0, region = "rest_of_uk") {
+/**
+ * @param {object} opts  { taxCode, employment: "employed"|"self_employed",
+ *                         studentLoan: "none"|"plan1"|"plan2"|"plan4"|"plan5"|"postgrad",
+ *                         pensionPct: number }
+ */
+export function estimateTax(appEarnings, otherIncome = 0, region = "rest_of_uk", opts = {}) {
   if (region === "skip") return null; // user hasn't set region yet
 
+  const { taxCode, employment = "employed", studentLoan = "none", pensionPct = 0 } = opts;
+  const pension = Math.max(0, (parseFloat(pensionPct) || 0) / 100) * appEarnings; // reduces take-home
   const totalIncome = appEarnings + otherIncome;
 
-  const totalIncomeTax = calcIncomeTax(totalIncome, region);
-  const totalNI = calcNI(totalIncome);
+  // ---- Income Tax (with tax code + pension relief) ----
+  const parsed = parseTaxCode(taxCode);
+  let totalIncomeTax;
+  if (parsed.special === "NT") {
+    totalIncomeTax = 0;
+  } else if (parsed.special === "BR") {
+    totalIncomeTax = 0.2 * Math.max(0, appEarnings - pension);
+  } else if (parsed.special === "D0") {
+    totalIncomeTax = 0.4 * Math.max(0, appEarnings - pension);
+  } else if (parsed.special === "D1") {
+    totalIncomeTax = 0.45 * Math.max(0, appEarnings - pension);
+  } else {
+    let pa = parsed.pa;
+    let taxable = Math.max(0, totalIncome - pension);
+    if (pa < 0) { taxable += -pa; pa = 0; } // K code adds to taxable income
+    // Personal allowance tapers away above £100k
+    if (pa > 0 && totalIncome > 100000) pa = Math.max(0, pa - Math.floor((totalIncome - 100000) / 2));
+    totalIncomeTax = calcIncomeTax(taxable, region, pa);
+  }
 
-  // Attribute the tax proportionally to this app's share of total income
+  // ---- National Insurance ----
+  const totalNI = employment === "self_employed" ? calcClass4NI(totalIncome) : calcNI(totalIncome);
+
+  // ---- Student loan ----
+  const totalStudentLoan = calcStudentLoan(studentLoan, totalIncome);
+
+  // Attribute deductions to this app's share of total income (special codes are already on app earnings)
   const proportion = totalIncome > 0 ? appEarnings / totalIncome : 1;
-  const attributedIncomeTax = totalIncomeTax * proportion;
+  const attributedIncomeTax = parsed.special && parsed.special !== "NT" ? totalIncomeTax : totalIncomeTax * proportion;
   const attributedNI = totalNI * proportion;
+  const attributedStudentLoan = totalStudentLoan * proportion;
 
-  const totalDeductions = attributedIncomeTax + attributedNI;
-  const takeHome = appEarnings - totalDeductions;
+  const totalDeductions = attributedIncomeTax + attributedNI + attributedStudentLoan;
+  const takeHome = appEarnings - totalDeductions - pension;
   const effectiveRate = appEarnings > 0 ? totalDeductions / appEarnings : 0;
 
   return {
     grossEarnings: appEarnings,
     estimatedIncomeTax: attributedIncomeTax,
     estimatedNI: attributedNI,
+    estimatedStudentLoan: attributedStudentLoan,
+    estimatedPension: pension,
     totalDeductions,
     estimatedTakeHome: takeHome,
     effectiveRate,
